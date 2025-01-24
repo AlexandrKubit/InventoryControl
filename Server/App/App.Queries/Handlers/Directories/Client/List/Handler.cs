@@ -13,9 +13,9 @@ public class Handler : IRequestHandler<Request, IEnumerable<Model>>
     public async Task<IEnumerable<Model>> HandleAsync(Request request, IServiceProvider provider)
     {
         var sql = @$"
-            SELECT ""Guid"", ""Name"", ""Address"", ""Condition""
-            FROM public.""Clients""
-            WHERE ""Condition"" = {request.Condition}
+            SELECT guid, name, address
+            FROM clients
+            WHERE condition = {request.Condition}
         ";
 
         using var connection = Connection.Get();

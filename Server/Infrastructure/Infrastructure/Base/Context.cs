@@ -13,7 +13,9 @@ public class Context : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseNpgsql("Host=127.0.0.1;Port=5432;Database=InventoryControl;Username=postgres;Password=MySupperPassword;");
+        optionsBuilder
+            .UseNpgsql("Host=127.0.0.1;Port=5432;Database=InventoryControl;Username=postgres;Password=MySupperPassword;")
+            .UseSnakeCaseNamingConvention();
     }
 
     public DbSet<Client> Clients { get; set; }
