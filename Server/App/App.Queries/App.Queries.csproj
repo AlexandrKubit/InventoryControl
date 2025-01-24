@@ -12,4 +12,9 @@
 	  <ProjectReference PrivateAssets="All" Include="..\App.Base\App.Base.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Npgsql" Version="9.0.2" />
+  </ItemGroup>
+
 </Project>

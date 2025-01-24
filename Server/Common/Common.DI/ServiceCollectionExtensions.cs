@@ -11,8 +11,8 @@ public static class ServiceCollectionExtensions
 {
     public static void AddMediator(this IServiceCollection services)
     {
-        App.Base.Mediator.Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(IUnitOfWork)));
-        //App.Base.Mediator.Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(App.Queries.Asm)));
+        Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(IUnitOfWork)));
+        Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(App.Queries.Base.Connection)));
     }
 
     public static void AddInfrastructure(this IServiceCollection services)

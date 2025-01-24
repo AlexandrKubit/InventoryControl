@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Queries\Warehouse\" />
-    <Folder Include="Queries\Directories\" />
   </ItemGroup>
 
   <ItemGroup>

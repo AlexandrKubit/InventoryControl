@@ -10,7 +10,7 @@
   <ItemGroup>
     <ProjectReference PrivateAssets="All" Include="..\..\App\App.Base\App.Base.csproj" />
     <ProjectReference PrivateAssets="All" Include="..\..\App\App.Commands\App.Commands.csproj" />
-    <ProjectReference PrivateAssets="All" Include="..\..\App\App.Queries\App.Queries.csproj" />
+    <ProjectReference Include="..\..\App\App.Queries\App.Queries.csproj" />
     <ProjectReference PrivateAssets="All" Include="..\..\Domain\Domain\Domain.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
