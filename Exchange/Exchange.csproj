@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Queries\Warehouse\" />
+    <Folder Include="Queries\Directories\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Server\App\App.Base\App.Base.csproj" />
+  </ItemGroup>
+
+</Project>

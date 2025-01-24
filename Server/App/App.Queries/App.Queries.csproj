@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>App.Queries</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <ProjectReference PrivateAssets="All" Include="..\..\..\Exchange\Exchange.csproj" />
+	  <ProjectReference PrivateAssets="All" Include="..\App.Base\App.Base.csproj" />
+  </ItemGroup>
+
+</Project>

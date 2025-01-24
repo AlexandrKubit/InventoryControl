@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<RootNamespace>App.Commands</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference PrivateAssets="All" Include="..\..\..\Exchange\Exchange.csproj" />
+		<ProjectReference PrivateAssets="All" Include="..\..\Common\Common.Exceptions\Common.Exceptions.csproj" />
+		<ProjectReference PrivateAssets="All" Include="..\..\Domain\Domain\Domain.csproj" />
+		<ProjectReference PrivateAssets="All" Include="..\App.Base\App.Base.csproj" />
+	</ItemGroup>
+
+</Project>

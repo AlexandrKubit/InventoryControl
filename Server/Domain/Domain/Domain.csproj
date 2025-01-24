@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>disable</Nullable>
+		<RootNamespace>Domain</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference PrivateAssets="All" Include="..\..\Common\Common.Exceptions\Common.Exceptions.csproj" />
+	</ItemGroup>
+
+</Project>
