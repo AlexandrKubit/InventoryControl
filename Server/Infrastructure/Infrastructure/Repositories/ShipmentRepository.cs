@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Services.Repositories;
+﻿namespace Infrastructure.Repositories;
 
 using Domain.Entities.Warehouse.Shipment;
 using Infrastructure.Base;
@@ -18,14 +18,14 @@ internal class ShipmentRepository : BaseRepository<Document>, App.Commands.Repos
     {
         var func = async (IEnumerable<Guid> args) =>
             await Context.Shipments.Where(x => args.Contains(x.ClientGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(clientGuids, func);
+        await LoadWithCacheAsync(clientGuids, func, this);
     }
 
     public async Task FillByNumbers(List<string> numbers)
     {
         var func = async (IEnumerable<string> args) =>
             await Context.Shipments.Where(x => args.Contains(x.Number)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(numbers, func);
+        await LoadWithCacheAsync(numbers, func, this);
     }
 
 

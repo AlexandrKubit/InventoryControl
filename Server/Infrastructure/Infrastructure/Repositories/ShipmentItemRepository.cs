@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Services.Repositories;
+﻿namespace Infrastructure.Repositories;
 
 using Domain.Entities.Warehouse.Shipment;
 using Infrastructure.Base;
@@ -19,7 +19,7 @@ internal class ShipmentItemRepository : BaseRepository<Item>, App.Commands.Repos
 
         var func = async (IEnumerable<Guid> args) =>
             await Context.ShipmentItems.Where(x => args.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(unitGuids, func);
+        await LoadWithCacheAsync(unitGuids, func, this);
     }
 
     public async Task FillByShipmentGuids(List<Guid> shipmentGuids)
@@ -27,14 +27,14 @@ internal class ShipmentItemRepository : BaseRepository<Item>, App.Commands.Repos
         var func = async (IEnumerable<Guid> args) =>
             await Context.ShipmentItems.Where(x => args.Contains(x.ShipmentGuid)).Select(x => x.Guid).ToListAsync();
 
-        await LoadWithCacheAsync(shipmentGuids, func);
+        await LoadWithCacheAsync(shipmentGuids, func, this);
     }
 
     public async Task FillByResourceGuids(List<Guid> resourceGuids)
     {
         var func = async (IEnumerable<Guid> args) =>
             await Context.ShipmentItems.Where(x => args.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(resourceGuids, func);
+        await LoadWithCacheAsync(resourceGuids, func, this);
     }
 
     protected override async Task Commit()

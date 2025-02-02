@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Services.Repositories;
+﻿namespace Infrastructure.Repositories;
 
 using Domain.Entities.Warehouse;
 using Infrastructure.Base;
@@ -18,14 +18,14 @@ internal class BalanceRepository : BaseRepository<Balance>, App.Commands.Reposit
     {
         var func = async (IEnumerable<Guid> guids) =>
             await Context.Balances.Where(x => guids.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(unitGuids, func);
+        await LoadWithCacheAsync(unitGuids, func, this);
     }
 
     public async Task FillByResourceGuids(List<Guid> resourceGuids)
     {
         var func = async (IEnumerable<Guid> guids) =>
              await Context.Balances.Where(x => guids.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(resourceGuids, func);
+        await LoadWithCacheAsync(resourceGuids, func, this);
     }
 
     public async Task FillByResourceMeasureUnit(IEnumerable<(Guid ResourceGuid, Guid MeasureUnitGuid)> args)
@@ -38,7 +38,7 @@ internal class BalanceRepository : BaseRepository<Balance>, App.Commands.Reposit
             .Select(b => b.Guid)
             .ToListAsync();
 
-        await LoadWithCacheAsync(compositeKeys, func);
+        await LoadWithCacheAsync(compositeKeys, func, this);
     }
 
     protected override async Task Commit()

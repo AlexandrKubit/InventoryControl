@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Services.Repositories;
+﻿namespace Infrastructure.Repositories;
 
 using Domain.Entities.Warehouse.Receipt;
 using Infrastructure.Base;
@@ -18,21 +18,21 @@ internal class ReceiptItemRepository : BaseRepository<Item>, App.Commands.Reposi
     {
         var func = async (IEnumerable<Guid> guids) => 
             await Context.ReceiptItems.Where(x => guids.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(unitGuids, func);
+        await LoadWithCacheAsync(unitGuids, func, this);
     }
 
     public async Task FillByReceiptGuids(List<Guid> receiptGuids)
     {
         var func = async (IEnumerable<Guid> guids) => 
             await Context.ReceiptItems.Where(x => guids.Contains(x.ReceiptGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(receiptGuids, func);
+        await LoadWithCacheAsync(receiptGuids, func, this);
     }
 
     public async Task FillByResourceGuids(List<Guid> resourceGuids)
     {
         var func = async (IEnumerable<Guid> guids) => 
             await Context.ReceiptItems.Where(x => guids.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(resourceGuids, func);
+        await LoadWithCacheAsync(resourceGuids, func, this);
     }
 
     protected override async Task Commit()

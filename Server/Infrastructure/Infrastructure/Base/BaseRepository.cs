@@ -1,6 +1,7 @@
 ﻿namespace Infrastructure.Base;
 
 using Domain.Base;
+using System.Runtime.CompilerServices;
 
 public abstract class BaseRepository<TEntity> where TEntity : BaseEntity
 {
@@ -38,7 +39,7 @@ public abstract class BaseRepository<TEntity> where TEntity : BaseEntity
     /// </summary>
     /// <param name="guids"></param>
     /// <returns></returns>
-    private async Task FillCollection(List<Guid> guids)
+    public async Task FillByGuids(List<Guid> guids)
     {
         var existGuids = list
             .Select(y => y.Guid)
@@ -63,12 +64,6 @@ public abstract class BaseRepository<TEntity> where TEntity : BaseEntity
     /// <returns></returns>
     protected abstract Task<List<TEntity>> GetFromDbByIdsAsync(List<Guid> guids);
 
-    // метод, который часто встречается в сценариях и бизнес-действиях, поэтому добавлен по умолчанию
-    public async Task FillByGuids(List<Guid> guids)
-    {
-        await FillCollection(guids);
-    }
-
     /// <summary>
     /// Метод вызывается в конце сценария, для того чтобы синхронизировать данные в БД и данные в коллекции
     /// Условно если где то выбросилось исключение, то никакие данные даже не будут переданы в БД
@@ -83,9 +78,10 @@ public abstract class BaseRepository<TEntity> where TEntity : BaseEntity
     ///// если метод вызывался с этими же аргументами, то он не будет повторно вызываться
     ///// если присутствует новый аргумент, то метод вызовется только с новым аргументом
     ///// </summary>
-    protected async Task LoadWithCacheAsync<TArgs>(IEnumerable<TArgs> args, Func<IEnumerable<TArgs>, Task<List<Guid>>> loadFunction)
+    protected async Task LoadWithCacheAsync<TArgs>(IEnumerable<TArgs> args, Func<IEnumerable<TArgs>, Task<List<Guid>>> loadFunction, object callerInstance, [CallerMemberName] string caller = "")
     {
-        var cacheKey = $"{loadFunction.Method.DeclaringType.FullName}:{loadFunction.Method.Name}";
+        //var cacheKey = $"{loadFunction.Method.DeclaringType.FullName}:{loadFunction.Method.Name}";
+        var cacheKey = $"{callerInstance.GetType().FullName}.{caller}";
 
         // Инициализация кэша для данного метода
         if (!cache.ContainsKey(cacheKey))
@@ -105,6 +101,6 @@ public abstract class BaseRepository<TEntity> where TEntity : BaseEntity
 
         // Вызываем загрузку только для новых аргументов
         var guids = await loadFunction(newArgs);
-        await FillCollection(guids);
+        await FillByGuids(guids);
     }
 }

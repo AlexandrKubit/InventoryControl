@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Services.Repositories;
+﻿namespace Infrastructure.Repositories;
 
 using Domain.Entities.Warehouse.Receipt;
 using Infrastructure.Base;
@@ -19,7 +19,7 @@ internal class ReceiptRepository : BaseRepository<Document>, App.Commands.Reposi
     {
         var func = async (IEnumerable<string> args) =>
              await Context.Receipts.Where(x => args.Contains(x.Number)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(numbers, func);
+        await LoadWithCacheAsync(numbers, func, this);
     }
 
 
