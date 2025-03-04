@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Server\App\App.Base\App.Base.csproj" />
+    <ProjectReference PrivateAssets="All" Include="..\Server\App\App.Base\App.Base.csproj" />
   </ItemGroup>
 
 </Project>

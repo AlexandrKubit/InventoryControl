@@ -1,0 +1,32 @@
+﻿@page "/units/form/{GuidString}"
+@inject HttpClient httpClient;
+@inject NavigationManager Navigation
+
+<PageTitle>Единица измерения - редактирование</PageTitle>
+<h2>Единицы измерения - редактирование</h2>
+
+@if (Unit == null)
+{
+    <div>Загрузка...</div>
+    return;
+}
+
+<div>
+    <button onclick="@SaveAsync" class="btn btn-success">Сохранить</button>
+    <button onclick="@DeleteAsync" class="btn btn-danger">Удалить</button>@(" ")
+    @if (Unit.Condition == 1)
+    {
+        <button onclick="@ChangeConditionAsync" class="btn btn-warning">В архив</button>
+    }
+    else
+    {
+        <button onclick="@ChangeConditionAsync" class="btn btn-primary">В работу</button>
+    }
+</div>
+<br />
+<div>
+    <div>
+        <label>Наименование</label>
+        <input value="@Unit.Name" onchange="@((ChangeEventArgs args) => Unit.Name = (string)args.Value)" />
+    </div>
+</div>

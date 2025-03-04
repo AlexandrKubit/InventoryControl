@@ -1,0 +1,35 @@
+﻿@page "/units/{Condition:int}";
+@inject HttpClient httpClient;
+@inject NavigationManager Navigation;
+
+<PageTitle>Единицы измерения</PageTitle>
+<h2>Единицы измерения</h2>
+
+<div>
+    @if (Condition == 1)
+    {
+        <a href="/units/form/@Guid.Empty" class="btn btn-success">Добавить</a>
+        <a href="/units/2" class="btn btn-warning">К архиву</a>
+    }
+    else
+    {
+        <a href="/units/1" class="btn btn-primary">К рабочим</a>
+    }
+</div>
+<br />
+
+<table class="table-bordered">
+    <thead>
+        <tr>
+            <th>Наименование</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var unit in Units)
+        {
+            <tr onclick="@(() => Navigation.NavigateTo("/units/form/" + unit.Guid.ToString()))">
+                <td>@unit.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>

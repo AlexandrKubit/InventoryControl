@@ -24,17 +24,26 @@ public static class Program
         {
             options.CustomSchemaIds(type => type.ToString());
         });
+
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy
+                .SetIsOriginAllowed(x => true)
+                .AllowAnyHeader()
+                .AllowCredentials();
+            });
+        });
     }
 
     private static void Configure(WebApplication app)
     {
         app.UseMiddleware<ExceptionHandlerMiddleware>();
+        app.UseCors("AllowAll");
         app.UseDomain();
         app.UseMediatorEndpoints();
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
+        app.UseSwagger();
+        app.UseSwaggerUI();
     }
 }

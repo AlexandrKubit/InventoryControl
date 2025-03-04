@@ -1,0 +1,32 @@
+﻿@page "/resources/form/{GuidString}"
+@inject HttpClient httpClient;
+@inject NavigationManager Navigation
+
+<PageTitle>Ресурс - редактирование</PageTitle>
+<h2>Ресурс - редактирование</h2>
+
+@if (Resource == null)
+{
+    <div>Загрузка...</div>
+    return;
+}
+
+<div>
+    <button onclick="@SaveAsync" class="btn btn-success">Сохранить</button>
+    <button onclick="@DeleteAsync" class="btn btn-danger">Удалить</button>@(" ")
+    @if (Resource.Condition == 1)
+    {
+        <button onclick="@ChangeConditionAsync" class="btn btn-warning">В архив</button>
+    }
+    else
+    {
+        <button onclick="@ChangeConditionAsync" class="btn btn-primary">В работу</button>
+    }
+</div>
+<br />
+<div>
+    <div>
+        <label>Наименование</label>
+        <input value="@Resource.Name" onchange="@((ChangeEventArgs args) => Resource.Name = (string)args.Value)" />
+    </div>
+</div>

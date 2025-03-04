@@ -38,6 +38,20 @@ public sealed class Client : BaseEntity
     // для улучшения производительности в сложных сценариях имеет смысл создавать методы так
     // чтобы они сразу же умели работать с массивом данных, и воспринимать Mhetod как частынй случай MhetodRange
     public record CreateArg(string Name, string Address);
+
+    //public abstract class CreateStrategy(List<CreateArg> _args)
+    //{
+    //    internal List<CreateArg> args = _args;
+    //    internal List<string> names;
+    //    protected abstract Task FillByNamesAsync(List<string> names);
+
+    //    protected async Task Execute()
+    //    {
+    //        names = args.Select(x => x.Name).ToList();
+    //        await FillByNamesAsync(names);
+    //    }
+    //}
+
     public static List<Client> CreateRange(List<CreateArg> args, IData data)
     {
         var names = args.Select(x => x.Name).ToList();

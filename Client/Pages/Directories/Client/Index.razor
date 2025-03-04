@@ -1,0 +1,37 @@
+﻿@page "/clients/{Condition:int}";
+@inject HttpClient httpClient;
+@inject NavigationManager Navigation;
+
+<PageTitle>Клиенты</PageTitle>
+<h2>Клиенты</h2>
+
+<div>
+    @if (Condition == 1)
+    {
+        <a href="/clients/form/@Guid.Empty" class="btn btn-success">Добавить</a>
+        <a href="/clients/2" class="btn btn-warning">К архиву</a>
+    }
+    else
+    {
+        <a href="/clients/1" class="btn btn-primary">К рабочим</a>
+    }
+</div>
+<br />
+
+<table class="table-bordered">
+    <thead>
+        <tr>
+            <th>Наименование</th>
+            <th>Адрес</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var client in Clients)
+        {
+            <tr onclick="@(() => Navigation.NavigateTo("/clients/form/" + client.Guid.ToString()))">
+                <td>@client.Name</td>
+                <td>@client.Address</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -20,7 +20,7 @@ internal class ClientRepository : BaseRepository<Client>, App.Commands.Repositor
         var func = async (IEnumerable<string> args) =>
             await Context.Clients.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
 
-        await LoadWithCacheAsync(names, func);
+        await LoadWithCacheAsync(names, func, this);
     }
 
     protected override async Task Commit()

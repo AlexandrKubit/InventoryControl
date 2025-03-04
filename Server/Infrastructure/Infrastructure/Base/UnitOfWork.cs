@@ -6,6 +6,7 @@ using Domain.Base;
 using Domain.Entities.Directories;
 using Domain.Entities.Warehouse;
 using Infrastructure.Repositories;
+using Infrastructure.Services.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Reflection;

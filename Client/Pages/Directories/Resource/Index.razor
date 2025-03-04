@@ -1,0 +1,35 @@
+﻿@page "/resources/{Condition:int}";
+@inject HttpClient httpClient;
+@inject NavigationManager Navigation;
+
+<PageTitle>Ресурсы</PageTitle>
+<h2>Ресурсы</h2>
+
+<div>
+    @if (Condition == 1)
+    {
+        <a href="/resources/form/@Guid.Empty" class="btn btn-success">Добавить</a>
+        <a href="/resources/2" class="btn btn-warning">К архиву</a>
+    }
+    else
+    {
+        <a href="/resources/1" class="btn btn-primary">К рабочим</a>
+    }
+</div>
+<br />
+
+<table class="table-bordered">
+    <thead>
+        <tr>
+            <th>Наименование</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var resource in Resources)
+        {
+            <tr onclick="@(() => Navigation.NavigateTo("/resources/form/" + resource.Guid.ToString()))">
+                <td>@resource.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
