@@ -1,0 +1,112 @@
+﻿@page "/shipments";
+@inject HttpClient httpClient;
+@inject NavigationManager Navigation;
+
+<PageTitle>Отгрузки</PageTitle>
+<h2>Отгрузки</h2>
+
+@if (Filters == null || List == null)
+{
+    <div>Загрузка...</div>
+    return;
+}
+
+<div>
+    <div class="row">
+        <div class="col">Период</div>
+        <div class="col">Номер отгрузки</div>
+        <div class="col">Клиент</div>
+        <div class="col">Ресурс</div>
+        <div class="col">Единица измерения</div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="input-group">
+                <input class="form-control" type="date" value="@Start.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs arg) => Start = DateTime.Parse(arg.Value.ToString()))" />
+                <input class="form-control" type="date" value="@End.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs arg) => End = DateTime.Parse(arg.Value.ToString()))" />
+            </div>
+        </div>
+        <div class="col">
+            <UI.Components.CustomSelect 
+                Options="@Filters.Numbers.Select(x=> new Components.CustomSelect<string>.SelectOption {Text = x, Value = x }).ToList()" 
+                OnChange="@((ChangeEventArgs arg) => SelectedNumbers = (arg.Value as string[]).ToList())" 
+            />
+        </div>
+        <div class="col">
+            <UI.Components.CustomSelect 
+                Options="@Filters.Clients.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()" 
+                OnChange="@((ChangeEventArgs arg) => SelectedClientGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            />
+        </div>
+        <div class="col">
+            <UI.Components.CustomSelect 
+                Options="@Filters.Resources.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()" 
+                OnChange="@((ChangeEventArgs arg) => SelectedResourceGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            />
+        </div>
+        <div class="col">
+            <UI.Components.CustomSelect 
+                Options="@Filters.MeasureUnits.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()"
+                OnChange="@((ChangeEventArgs arg) => SelectedMeasureUnitGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            />
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary" onclick="@GetListAsync">Применить</button>
+            <a href="/shipments/form/@Guid.Empty" class="btn btn-success">Добавить</a>
+        </div>
+    </div>
+</div>
+<br/>
+<table class="table-bordered">
+    <thead>
+        <tr>
+            <th>Номер</th>
+            <th>Дата</th>
+            <th>Клиент</th>
+            <th>Ресурс</th>
+            <th>Единица измерения</th>
+            <th>Количество</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var shipment in List.Shipments)
+        {
+            int row = 0;
+            var items = List.Items.Where(x => x.ShipmentGuid == shipment.Guid).ToList();
+
+            if(items.Count > 0)
+            {
+                foreach(var item in items)
+                {
+                    row++;
+                    <tr onclick="@(() => Navigation.NavigateTo("/shipments/form/" + shipment.Guid.ToString()))">
+                        @if(row == 1)
+                        {
+                            <td rowspan="@items.Count">@shipment.Number</td>
+                            <td rowspan="@items.Count">@shipment.Date.ToShortDateString()</td>
+                            <td rowspan="@items.Count">@shipment.ClientName</td>
+                        }
+
+                        <td>@item.ResourceName</td>
+                        <td>@item.MeasureUnitName</td>
+                        <td>@item.Quantity</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr onclick="@(() => Navigation.NavigateTo("/shipments/form/" + shipment.Guid.ToString()))">
+                    <td>@shipment.Number</td>
+                    <td>@shipment.Date.ToShortDateString()</td>
+                    <td rowspan="@items.Count">@shipment.ClientName</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
