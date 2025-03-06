@@ -22,7 +22,7 @@ public partial class Index
 
     public async Task GetListAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/Client/List", new Request { Condition = Condition });
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Client/List", new Request { Condition = Condition });
         Clients = await result.Content.ReadFromJsonAsync<List<Model>>();
     }
 }

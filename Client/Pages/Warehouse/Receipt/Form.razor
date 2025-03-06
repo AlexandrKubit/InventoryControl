@@ -1,0 +1,73 @@
+﻿@page "/receipts/form/{GuidString}"
+@inject HttpClient httpClient;
+@inject NavigationManager Navigation
+
+<PageTitle>Поступление</PageTitle>
+<h2>Поступление</h2>
+
+@if (Model == null)
+{
+    <div>Загрузка...</div>
+    return;
+}
+
+<div>
+    <button onclick="@SaveAsync" class="btn btn-success">Сохранить</button>@(" ")
+    @if(Model.Document.Guid != Guid.Empty)
+    {
+        <button onclick="@DeleteAsync" class="btn btn-danger">Удалить</button>
+    }
+</div>
+<br />
+<div>
+    <table>
+        <tbody>
+            <tr>
+                <td>Номер</td>
+                <td><input class="form-control" value="@Model.Document.Number" onchange="@((ChangeEventArgs args) => Model.Document.Number = (string)args.Value)" /></td>
+            </tr>
+            <tr>
+                <td>Дата</td>
+                <td><input class="form-control" type="date" value="@Model.Document.Date.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs args) => Model.Document.Date = DateTime.Parse(args.Value.ToString()))" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <br />
+    <table class="table-bordered">
+        <thead>
+            <tr>
+                <td><button class="btn btn-success" onclick="@AddItem">+</button></td>
+                <th>Ресурс</th>
+                <th>Единица измерения</th>
+                <th>Количество</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td><button class="btn btn-danger" onclick="@(() => RemoveItem(item))">x</button></td>
+                    <td>
+                        <select class="form-control" onchange="@((ChangeEventArgs arg) => item.ResourceGuid = Guid.Parse((string)arg.Value))">
+                            @foreach(var resource in Model.Resources)
+                            {
+                                <option selected="@(item.ResourceGuid == resource.Guid)" value="@resource.Guid">@resource.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control" onchange="@((ChangeEventArgs arg) => item.MeasureUnitGuid = Guid.Parse((string)arg.Value))">
+                            @foreach (var unit in Model.MeasureUnits)
+                            {
+                                <option selected="@(item.MeasureUnitGuid == unit.Guid)" value="@unit.Guid">@unit.Name</option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <input class="form-control" value="@item.Quantity" onchange="@((ChangeEventArgs arg) => item.Quantity = decimal.Parse(arg.Value.ToString()))" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

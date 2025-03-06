@@ -2,8 +2,8 @@
 @inject HttpClient httpClient;
 @inject NavigationManager Navigation
 
-<PageTitle>Клиент - редактирование</PageTitle>
-<h2>Клиент - редактирование</h2>
+<PageTitle>Клиент</PageTitle>
+<h2>Клиент</h2>
 
 @if (Client == null)
 {
@@ -12,15 +12,19 @@
 }
 
 <div>
-    <button onclick="@SaveAsync" class="btn btn-success">Сохранить</button>
-    <button onclick="@DeleteAsync" class="btn btn-danger">Удалить</button>@(" ")
-    @if(Client.Condition == 1)
+    <button onclick="@SaveAsync" class="btn btn-success">Сохранить</button>@(" ")
+
+    @if(Client.Guid != Guid.Empty)
     {
-        <button onclick="@ChangeConditionAsync" class="btn btn-warning">В архив</button>
-    }
-    else
-    {
-        <button onclick="@ChangeConditionAsync" class="btn btn-primary">В работу</button>
+        <button onclick="@DeleteAsync" class="btn btn-danger">Удалить</button>@(" ")
+        if(Client.Condition == 1)
+        {
+            <button onclick="@ChangeConditionAsync" class="btn btn-warning">В архив</button>
+        }
+        else
+        {
+            <button onclick="@ChangeConditionAsync" class="btn btn-primary">В работу</button>
+        }
     }
 </div>
 <br />
@@ -29,11 +33,11 @@
         <tbody>
             <tr>
                 <td>Наименование</td>
-                <td><input value="@Client.Name" onchange="@((ChangeEventArgs args) => Client.Name = (string)args.Value)" /></td>
+                <td><input class="form-control" value="@Client.Name" onchange="@((ChangeEventArgs args) => Client.Name = (string)args.Value)" /></td>
             </tr>
             <tr>
                 <td>Адрес</td>
-                <td><input value="@Client.Address" onchange="@((ChangeEventArgs args) => Client.Address = (string)args.Value)" /></td>
+                <td><input class="form-control" value="@Client.Address" onchange="@((ChangeEventArgs args) => Client.Address = (string)args.Value)" /></td>
             </tr>
         </tbody>
     </table>

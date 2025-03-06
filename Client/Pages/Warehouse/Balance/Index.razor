@@ -1,0 +1,56 @@
+﻿@page "/balances";
+@inject HttpClient httpClient;
+
+<PageTitle>Баланс</PageTitle>
+<h2>Баланс</h2>
+
+@if (Filters == null || List == null)
+{
+    <div>Загрузка...</div>
+    return;
+}
+
+<div>
+    <div class="row">
+        <div class="col">Ресурс</div>
+        <div class="col">Единица измерения</div>
+        <div class="col"></div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <UI.Components.CustomSelect 
+                Options="@Filters.Resources.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()" 
+                OnChange="@((ChangeEventArgs arg) => SelectedResourceGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            />
+        </div>
+        <div class="col">
+            <UI.Components.CustomSelect 
+                Options="@Filters.MeasureUnits.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()"
+                OnChange="@((ChangeEventArgs arg) => SelectedMeasureUnitGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            />
+        </div>
+        <div class="col">
+            <button class="btn btn-primary" onclick="@GetListAsync">Применить</button>
+        </div>
+    </div>
+</div>
+<br />
+<table class="table-bordered">
+    <thead>
+        <tr>
+            <th>Ресурс</th>
+            <th>Единица измерения</th>
+            <th>Количество</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var balance in List.Balances)
+        {
+            <tr>
+                <td>@balance.ResourceName</td>
+                <td>@balance.MeasureUnitName</td>
+                <td>@balance.Quantity</td>
+            </tr>
+        }
+    </tbody>
+</table>

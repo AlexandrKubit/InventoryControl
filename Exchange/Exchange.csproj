@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Queries\Warehouse\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference PrivateAssets="All" Include="..\Server\App\App.Base\App.Base.csproj" />
   </ItemGroup>
 

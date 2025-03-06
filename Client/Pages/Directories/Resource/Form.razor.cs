@@ -23,26 +23,26 @@ public partial class Form
         }
         else
         {
-            var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/Resource/Form", new Request { Guid = Guid.Parse(GuidString) });
+            var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/Form", new Request { Guid = Guid.Parse(GuidString) });
             Resource = await result.Content.ReadFromJsonAsync<Model>();
         }
     }
 
     public async Task SaveAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/Resource/Save", new Exchange.Commands.Directories.Resource.Save.Request { Guid = Resource.Guid, Name = Resource.Name });
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/Save", new Exchange.Commands.Directories.Resource.Save.Request { Guid = Resource.Guid, Name = Resource.Name });
         Navigation.NavigateTo("/resources/1");
     }
 
     public async Task DeleteAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/Resource/Delete", new Exchange.Commands.Directories.Resource.Delete.Request { Guid = Resource.Guid});
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/Delete", new Exchange.Commands.Directories.Resource.Delete.Request { Guid = Resource.Guid});
         Navigation.NavigateTo("/resources/1");
     }
 
     public async Task ChangeConditionAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/Resource/ChangeCondition", new Exchange.Commands.Directories.Resource.ChangeCondition.Request { Guid = Resource.Guid });
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/ChangeCondition", new Exchange.Commands.Directories.Resource.ChangeCondition.Request { Guid = Resource.Guid });
         Navigation.NavigateTo("/resources/1");
     }
 }

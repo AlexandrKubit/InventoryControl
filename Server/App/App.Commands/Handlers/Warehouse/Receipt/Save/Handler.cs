@@ -17,7 +17,7 @@ public class Handler : IRequestHandler<Request, Guid>
 
         if (request.Guid == Guid.Empty)
         {
-            var receipt = Document.CreateRange([new Document.CreateArg(request.Number, request.Date)], uow).First();
+            var receipt = Document.CreateRange([new Document.CreateArg(request.Number, request.Date.Date)], uow).First();
             var itemArgs = request.Items
                 .Select(x => new Item.CreateArg(receipt.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
                 .ToList();
@@ -35,7 +35,7 @@ public class Handler : IRequestHandler<Request, Guid>
 
             Document.UpdateRange([new Document.UpdateArg(receipt) with {
                 Number = request.Number,
-                Date = request.Date
+                Date = request.Date.Date
             }], uow);
 
             await uow.ReceiptItem.FillByReceiptGuids([receipt.Guid]);
@@ -50,6 +50,7 @@ public class Handler : IRequestHandler<Request, Guid>
             var args = deletedItems.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToList();
             args.AddRange(createdItems.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)));
             args.AddRange(updatedItems.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)));
+            args.AddRange(items.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)));
             args = args.Distinct().ToList();
             await uow.Balance.FillByResourceMeasureUnit(args);
 

@@ -38,14 +38,14 @@ internal class ShipmentRepository : BaseRepository<Document>, App.Commands.Repos
             {
                 Guid = entity.Guid,
                 Number = entity.Number,
-                Date = entity.Date,
+                Date = entity.Date.ToUniversalTime(),
                 ClientGuid = entity.ClientGuid,
                 Condition = entity.Condition
             },
             updateMapDelegate: (dbEntity, entity) =>
             {
                 dbEntity.Number = entity.Number;
-                dbEntity.Date = entity.Date;
+                dbEntity.Date = entity.Date.ToUniversalTime();
                 dbEntity.ClientGuid = entity.ClientGuid;
                 dbEntity.Condition = entity.Condition;
             }

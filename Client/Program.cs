@@ -31,3 +31,8 @@ public class CookieHandler : DelegatingHandler
         return base.SendAsync(request, cancellationToken);
     }
 }
+
+public static class Settings
+{
+    public static string Url = "http://localhost:5000";
+}

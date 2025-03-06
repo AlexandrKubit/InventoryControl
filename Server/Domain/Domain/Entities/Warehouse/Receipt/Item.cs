@@ -82,11 +82,11 @@ public sealed class Item : BaseEntity
 
         List<Balance.AddRangeToStockArg> addRangeToStockArgs = args
             .Where(x => x.Quantity > x.Item.Quantity && x.Item.ResourceGuid == x.ResourceGuid && x.Item.MeasureUnitGuid == x.MeasureUnitGuid)
-            .Select(x => new Balance.AddRangeToStockArg(x.Item.ResourceGuid, x.Item.MeasureUnitGuid, x.Quantity - x.Item.Quantity))
+            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity - x.Item.Quantity))
             .ToList();
         addRangeToStockArgs.AddRange(args
             .Where(x => x.Item.ResourceGuid != x.ResourceGuid || x.Item.MeasureUnitGuid != x.MeasureUnitGuid)
-            .Select(x => new Balance.AddRangeToStockArg(x.Item.ResourceGuid, x.Item.MeasureUnitGuid, x.Item.Quantity))
+            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
             .ToList()
         );
 

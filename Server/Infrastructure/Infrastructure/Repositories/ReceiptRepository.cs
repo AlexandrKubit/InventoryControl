@@ -32,12 +32,12 @@ internal class ReceiptRepository : BaseRepository<Document>, App.Commands.Reposi
             {
                 Guid = entity.Guid,
                 Number = entity.Number,
-                Date = entity.Date
+                Date = entity.Date.ToUniversalTime()
             },
             updateMapDelegate: (dbEntity, entity) =>
             {
                 dbEntity.Number = entity.Number;
-                dbEntity.Date = entity.Date;
+                dbEntity.Date = entity.Date.ToUniversalTime();
             }
         );
         await Context.SaveChangesAsync();

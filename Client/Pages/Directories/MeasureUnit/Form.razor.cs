@@ -23,26 +23,26 @@ public partial class Form
         }
         else
         {
-            var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/MeasureUnit/Form", new Request { Guid = Guid.Parse(GuidString) });
+            var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/Form", new Request { Guid = Guid.Parse(GuidString) });
             Unit = await result.Content.ReadFromJsonAsync<Model>();
         }
     }
 
     public async Task SaveAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/MeasureUnit/Save", new Exchange.Commands.Directories.MeasureUnit.Save.Request { Guid = Unit.Guid, Name = Unit.Name });
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/Save", new Exchange.Commands.Directories.MeasureUnit.Save.Request { Guid = Unit.Guid, Name = Unit.Name });
         Navigation.NavigateTo("/units/1");
     }
 
     public async Task DeleteAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/MeasureUnit/Delete", new Exchange.Commands.Directories.MeasureUnit.Delete.Request { Guid = Unit.Guid});
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/Delete", new Exchange.Commands.Directories.MeasureUnit.Delete.Request { Guid = Unit.Guid});
         Navigation.NavigateTo("/units/1");
     }
 
     public async Task ChangeConditionAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"http://localhost:5000/Directories/MeasureUnit/ChangeCondition", new Exchange.Commands.Directories.MeasureUnit.ChangeCondition.Request { Guid = Unit.Guid });
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/ChangeCondition", new Exchange.Commands.Directories.MeasureUnit.ChangeCondition.Request { Guid = Unit.Guid });
         Navigation.NavigateTo("/units/1");
     }
 }
