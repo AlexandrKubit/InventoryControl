@@ -11,63 +11,117 @@
     return;
 }
 
-<div>
-    <button onclick="@SaveAsync" class="btn btn-success">Сохранить</button>@(" ")
-    @if(Model.Document.Guid != Guid.Empty)
-    {
-        <button onclick="@DeleteAsync" class="btn btn-danger">Удалить</button>
-    }
-</div>
-<br />
-<div>
-    <table>
-        <tbody>
-            <tr>
-                <td>Номер</td>
-                <td><input class="form-control" value="@Model.Document.Number" onchange="@((ChangeEventArgs args) => Model.Document.Number = (string)args.Value)" /></td>
-            </tr>
-            <tr>
-                <td>Клиент</td>
-                <td>
-                    <select class="form-control" onchange="@((ChangeEventArgs arg) => Model.Document.ClientGuid = Guid.Parse((string)arg.Value))">
-                        @foreach (var client in Model.Clients)
-                        {
-                            <option selected="@(Model.Document.ClientGuid == client.Guid)" value="@client.Guid">@client.Name</option>
-                        }
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>Дата</td>
-                <td><input class="form-control" type="date" value="@Model.Document.Date.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs args) => Model.Document.Date = DateTime.Parse(args.Value.ToString()))" /></td>
-            </tr>
-        </tbody>
-    </table>
-    <br />
-    <table class="table-bordered">
-        <thead>
-            <tr>
-                <th>Ресурс</th>
-                <th>Единица измерения</th>
-                <th>Количество</th>
-                <th>Доступно</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var row in Rows)
-            {
-                var resource = Model.Resources.FirstOrDefault(x => x.Guid == row.ResourceGuid);
-                var unit = Model.MeasureUnits.FirstOrDefault(x => x.Guid == row.MeasureUnitGuid);
+@if(Model.Document.Condition == 2)
+{
+    var clent = Model.Clients.FirstOrDefault(x => x.Guid == Model.Document.ClientGuid) ?? new Exchange.Queries.Warehouse.Shipment.Form.Model.Select();
 
+    <div>
+        <button onclick="@CangeConditionAsync" class="btn btn-danger">Отозвать</button>
+    </div>
+    <br />
+    <div>
+        <table>
+            <tbody>
                 <tr>
-                    <td>@resource.Name</td>
-                    <td>@unit.Name</td>
-                    <td>
-                        <input class="form-control" value="@row.CurrentQuantity" onchange="@((ChangeEventArgs arg) => ChangeQuantity(arg, row))" />
-                    </td>
-                    <td>@row.MaxQuantity</td>
+                    <td>Номер</td>
+                    <td>@Model.Document.Number</td>
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+                <tr>
+                    <td>Клиент</td>
+                    <td>@clent.Name</td>
+                </tr>
+                <tr>
+                    <td>Дата</td>
+                    <td>@Model.Document.Date.ToShortDateString()</td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+        <table class="table-bordered">
+            <thead>
+                <tr>
+                    <th>Ресурс</th>
+                    <th>Единица измерения</th>
+                    <th>Количество</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Rows.Where(x => x.CurrentQuantity > 0))
+                {
+                    var resource = Model.Resources.FirstOrDefault(x => x.Guid == row.ResourceGuid) ?? new Exchange.Queries.Warehouse.Shipment.Form.Model.Select();
+                    var unit = Model.MeasureUnits.FirstOrDefault(x => x.Guid == row.MeasureUnitGuid) ?? new Exchange.Queries.Warehouse.Shipment.Form.Model.Select();
+
+                    <tr>
+                        <td>@resource.Name</td>
+                        <td>@unit.Name</td>
+                        <td>@row.CurrentQuantity</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div>
+        <button onclick="@SaveAsyncWithNavigate" class="btn btn-success">Сохранить</button>
+        <button onclick="@CangeConditionAsync" class="btn btn-success">Сохранить и подписать</button>@(" ")
+        @if (Model.Document.Guid != Guid.Empty)
+        {
+            <button onclick="@DeleteAsync" class="btn btn-danger">Удалить</button>
+        }
+    </div>
+    <br />
+    <div>
+        <table>
+            <tbody>
+                <tr>
+                    <td>Номер</td>
+                    <td><input class="form-control" value="@Model.Document.Number" onchange="@((ChangeEventArgs args) => Model.Document.Number = (string)args.Value)" /></td>
+                </tr>
+                <tr>
+                    <td>Клиент</td>
+                    <td>
+                        <select class="form-control" onchange="@((ChangeEventArgs arg) => Model.Document.ClientGuid = Guid.Parse((string)arg.Value))">
+                            @foreach (var client in Model.Clients)
+                            {
+                                <option selected="@(Model.Document.ClientGuid == client.Guid)" value="@client.Guid">@client.Name</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Дата</td>
+                    <td><input class="form-control" type="date" value="@Model.Document.Date.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs args) => Model.Document.Date = DateTime.Parse(args.Value.ToString()))" /></td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+        <table class="table-bordered">
+            <thead>
+                <tr>
+                    <th>Ресурс</th>
+                    <th>Единица измерения</th>
+                    <th>Количество</th>
+                    <th>Доступно</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Rows)
+                {
+                    var resource = Model.Resources.FirstOrDefault(x => x.Guid == row.ResourceGuid);
+                    var unit = Model.MeasureUnits.FirstOrDefault(x => x.Guid == row.MeasureUnitGuid);
+
+                    <tr>
+                        <td>@resource.Name</td>
+                        <td>@unit.Name</td>
+                        <td>
+                            <input class="form-control" value="@row.CurrentQuantity" @oninput="@(e => SetQuantity(e, row))" />
+                        </td>
+                        <td>@row.MaxQuantity</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

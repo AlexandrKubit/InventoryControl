@@ -14,6 +14,7 @@ public class Model
         public string Number { get; set; }
         public Guid ClientGuid { get; set; }
         public DateTime Date { get; set; } = DateTime.Now;
+        public int Condition { get; set; }
     }
 
     public class Item

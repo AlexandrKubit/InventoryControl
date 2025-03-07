@@ -15,7 +15,7 @@ public class Handler : IRequestHandler<Request, Model>
         var model = new Model();
 
         var sql = @$"
-            select d.guid, d.number, d.date::date, c.name as ClientName, r.name as ResourceName, u.name as MeasureUnitName, i.quantity
+            select d.guid, d.number, d.date::date, d.condition, c.name as ClientName, r.name as ResourceName, u.name as MeasureUnitName, i.quantity
             from shipments d
             join clients c on d.client_guid = c.guid
             left join shipment_items i on d.guid = i.shipment_guid
@@ -42,8 +42,8 @@ public class Handler : IRequestHandler<Request, Model>
         if (responses.Any())
         {
             model.Shipments = responses
-                .GroupBy(x => new { x.Guid, x.Date, x.Number, x.ClientName })
-                .Select(x => new Model.Shipment { Guid = x.Key.Guid, Date = x.Key.Date, Number = x.Key.Number, ClientName = x.Key.ClientName })
+                .GroupBy(x => new { x.Guid, x.Date, x.Number, x.ClientName, x.Condition })
+                .Select(x => new Model.Shipment { Guid = x.Key.Guid, Date = x.Key.Date, Number = x.Key.Number, ClientName = x.Key.ClientName, Condition = x.Key.Condition })
                 .ToList();
 
             model.Items = responses
@@ -60,6 +60,7 @@ public class Handler : IRequestHandler<Request, Model>
         public string Number { get; set; }
         public string ClientName { get; set; }
         public DateTime Date { get; set; }
+        public int Condition { get; set; }
         public string ResourceName { get; set; }
         public string MeasureUnitName { get; set; }
         public decimal Quantity { get; set; }

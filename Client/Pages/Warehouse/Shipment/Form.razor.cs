@@ -56,7 +56,8 @@ public partial class Form
         Rows = Rows.OrderByDescending(x=> x.CurrentQuantity).ToList();
     }
 
-    public async Task SaveAsync()
+
+    public async Task<Guid> SaveAsync()
     {
         var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/Save", new Exchange.Commands.Warehouse.Shipment.Save.Request
         {
@@ -64,7 +65,7 @@ public partial class Form
             Date = Model.Document.Date,
             Number = Model.Document.Number,
             ClientGuid = Model.Document.ClientGuid,
-            Items = Rows.Where(x=> x.CurrentQuantity > 0).Select(x => new Exchange.Commands.Warehouse.Shipment.Save.Request.Item
+            Items = Rows.Where(x => x.CurrentQuantity > 0).Select(x => new Exchange.Commands.Warehouse.Shipment.Save.Request.Item
             {
                 Guid = x.Guid,
                 ShipmentGuid = Model.Document.Guid,
@@ -73,6 +74,15 @@ public partial class Form
                 Quantity = x.CurrentQuantity
             }).ToList()
         });
+
+        var response = await result.Content.ReadFromJsonAsync<Guid>();
+
+        return response;
+    }
+
+    public async Task SaveAsyncWithNavigate()
+    {
+        await SaveAsync();
         Navigation.NavigateTo("/shipments");
     }
 
@@ -82,16 +92,21 @@ public partial class Form
         Navigation.NavigateTo("/shipments");
     }
 
-
-    public void ChangeQuantity(ChangeEventArgs args, ItemRow row)
+    public async Task CangeConditionAsync()
     {
-        decimal quantity = 0;
+        if (Model.Document.Condition != 2)
+            Model.Document.Guid = await SaveAsync();
 
-        decimal.TryParse((string)args.Value, out quantity);
-        if (quantity >= row.MaxQuantity)
-            quantity = row.MaxQuantity;
+        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/ChangeCondition", new Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request { Guid = Model.Document.Guid });
+        Navigation.NavigateTo("/shipments");
+    }
 
-        row.CurrentQuantity = quantity;
+    private void SetQuantity(ChangeEventArgs e, ItemRow row)
+    {
+        decimal.TryParse(e.Value?.ToString(), out var inputValue);
+        if (inputValue > row.MaxQuantity)
+            inputValue = 0;
+        row.CurrentQuantity = inputValue;
         StateHasChanged();
     }
 

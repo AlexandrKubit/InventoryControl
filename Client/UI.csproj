@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Exchange\Exchange.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Новая папка\" />
+  </ItemGroup>
+
 </Project>

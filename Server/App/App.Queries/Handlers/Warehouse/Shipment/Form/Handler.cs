@@ -34,7 +34,7 @@ public class Handler : IRequestHandler<Request, Model>
             FROM shipment_items
             where shipment_guid = @Guid;
 
-            select guid, number, client_guid as ClientGuid, date::date
+            select guid, number, client_guid as ClientGuid, date::date, condition
             from shipments
             where guid = @Guid;
 

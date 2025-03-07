@@ -10,6 +10,7 @@ public class Model
         public string Number { get; set; }
         public string ClientName { get; set; }
         public DateTime Date { get; set; }
+        public int Condition { get; set; }
     }
 
     public class Item

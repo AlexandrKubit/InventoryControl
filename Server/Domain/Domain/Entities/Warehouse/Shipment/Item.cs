@@ -32,7 +32,7 @@ public sealed class Item : BaseEntity
     public record CreateArg(Guid ShipmentGuid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
     public static List<Item> CreateRange(List<CreateArg> args, IData data)
     {
-        var shipmentGuids = args.Select(x => x.ShipmentGuid).ToList();
+        var shipmentGuids = args.Select(x => x.ShipmentGuid).Distinct().ToList();
         if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно добавить ресурс в подписанную отгрузку");
 
@@ -56,7 +56,7 @@ public sealed class Item : BaseEntity
     };
     public static void UpdateRange(List<UpdateArg> args, IData data)
     {
-        var shipmentGuids = args.Select(x => x.Item.ShipmentGuid).ToList();
+        var shipmentGuids = args.Select(x => x.Item.ShipmentGuid).Distinct().ToList();
         if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно изменить ресурс в подписанной отгрузке");
 
@@ -71,7 +71,7 @@ public sealed class Item : BaseEntity
 
     public static void DeleteRange(List<Item> items, IData data)
     {
-        var shipmentGuids = items.Select(x => x.ShipmentGuid).ToList();
+        var shipmentGuids = items.Select(x => x.ShipmentGuid).Distinct().ToList();
         if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно удалить ресурс из подписанной отгрузки");
 

@@ -28,26 +28,26 @@
         </div>
         <div class="col">
             <UI.Components.CustomSelect 
-                Options="@Filters.Numbers.Select(x=> new Components.CustomSelect<string>.SelectOption {Text = x, Value = x }).ToList()" 
-                OnChange="@((ChangeEventArgs arg) => SelectedNumbers = (arg.Value as string[]).ToList())" 
+            Options="@Filters.Numbers.Select(x=> new Components.CustomSelect<string>.SelectOption {Text = x, Value = x }).ToList()" 
+            OnChange="@((ChangeEventArgs arg) => SelectedNumbers = (arg.Value as string[]).ToList())" 
             />
         </div>
         <div class="col">
             <UI.Components.CustomSelect 
-                Options="@Filters.Clients.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()" 
-                OnChange="@((ChangeEventArgs arg) => SelectedClientGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            Options="@Filters.Clients.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()" 
+            OnChange="@((ChangeEventArgs arg) => SelectedClientGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
             />
         </div>
         <div class="col">
             <UI.Components.CustomSelect 
-                Options="@Filters.Resources.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()" 
-                OnChange="@((ChangeEventArgs arg) => SelectedResourceGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            Options="@Filters.Resources.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()" 
+            OnChange="@((ChangeEventArgs arg) => SelectedResourceGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
             />
         </div>
         <div class="col">
             <UI.Components.CustomSelect 
-                Options="@Filters.MeasureUnits.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()"
-                OnChange="@((ChangeEventArgs arg) => SelectedMeasureUnitGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
+            Options="@Filters.MeasureUnits.Select(x=> new Components.CustomSelect<Guid>.SelectOption {Text = x.Name, Value = x.Guid }).ToList()"
+            OnChange="@((ChangeEventArgs arg) => SelectedMeasureUnitGuids = (arg.Value as string[]).Select(x=> Guid.Parse(x)).ToList())" 
             />
         </div>
     </div>
@@ -66,6 +66,7 @@
             <th>Номер</th>
             <th>Дата</th>
             <th>Клиент</th>
+            <th>Статус</th>
             <th>Ресурс</th>
             <th>Единица измерения</th>
             <th>Количество</th>
@@ -88,6 +89,16 @@
                             <td rowspan="@items.Count">@shipment.Number</td>
                             <td rowspan="@items.Count">@shipment.Date.ToShortDateString()</td>
                             <td rowspan="@items.Count">@shipment.ClientName</td>
+                            <td rowspan="@items.Count">
+                                @if (shipment.Condition == 1)
+                                {
+                                    <span class="badge bg-secondary">Не подписан</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Подписан</span>
+                                }
+                            </td>
                         }
 
                         <td>@item.ResourceName</td>
@@ -101,7 +112,17 @@
                 <tr onclick="@(() => Navigation.NavigateTo("/shipments/form/" + shipment.Guid.ToString()))">
                     <td>@shipment.Number</td>
                     <td>@shipment.Date.ToShortDateString()</td>
-                    <td rowspan="@items.Count">@shipment.ClientName</td>
+                    <td>@shipment.ClientName</td>
+                    <td>
+                        @if (shipment.Condition == 1)
+                        {
+                            <span class="badge bg-secondary">Не подписан</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Подписан</span>
+                        }
+                    </td>
                     <td></td>
                     <td></td>
                     <td></td>
