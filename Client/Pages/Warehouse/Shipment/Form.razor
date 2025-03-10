@@ -76,7 +76,7 @@ else
             <tbody>
                 <tr>
                     <td>Номер</td>
-                    <td><input class="form-control" value="@Model.Document.Number" onchange="@((ChangeEventArgs args) => Model.Document.Number = (string)args.Value)" /></td>
+                    <td><input class="form-control" @bind="@Model.Document.Number"/></td>
                 </tr>
                 <tr>
                     <td>Клиент</td>
@@ -91,7 +91,7 @@ else
                 </tr>
                 <tr>
                     <td>Дата</td>
-                    <td><input class="form-control" type="date" value="@Model.Document.Date.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs args) => Model.Document.Date = DateTime.Parse(args.Value.ToString()))" /></td>
+                    <td><input class="form-control" type="date" @bind="@Model.Document.Date"/></td>
                 </tr>
             </tbody>
         </table>
@@ -115,7 +115,7 @@ else
                         <td>@resource.Name</td>
                         <td>@unit.Name</td>
                         <td>
-                            <input class="form-control" value="@row.CurrentQuantity" @oninput="@(e => SetQuantity(e, row))" />
+                            <input class="form-control" @bind="@row.CurrentQuantity" />
                         </td>
                         <td>@row.MaxQuantity</td>
                     </tr>

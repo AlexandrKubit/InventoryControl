@@ -17,10 +17,13 @@
 
     @if (isOpen)
     {
+        <!-- Overlay для закрытия по клику вне компонента -->
+        <div class="dropdown-overlay" @onclick="CloseDropdown"></div>
+
         <div class="dropdown-options">
             @foreach (var option in Options)
             {
-                <div class="option @(IsSelected(option.Value) ? "selected" : "")" 
+                <div class="option @(IsSelected(option.Value) ? "selected" : "")"
                      @onclick="@(() => HandleSelect(option.Value))">
                     @option.Text
                 </div>
@@ -102,13 +105,44 @@
         public string Text { get; set; }
         public TValue Value { get; set; }
     }
+
+    private void CloseDropdown()
+    {
+        isOpen = false;
+    }
 }
 
 
 <style>
+    /* Добавляем стили для overlay */
+    .dropdown-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999; /* Ниже чем у dropdown-options */
+        cursor: default;
+    }
+
+    .dropdown-options {
+        /* Увеличиваем z-index для dropdown */
+        z-index: 1000;
+        /* Остальные стили без изменений */
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
     .custom-select {
         position: relative;
-/*         width: 300px; */
         font-family: Arial;
         border: 1px solid #ccc;
         border-radius: 4px;

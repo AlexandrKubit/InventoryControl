@@ -22,6 +22,8 @@ public partial class Index
 
     public async Task GetListAsync()
     {
-        Units = await HttpService.GetDataAsync<Request, List<Model>>("/Directories/MeasureUnit/List", new Request { Condition = Condition });
+        var result = await HttpService.GetDataAsync<Request, List<Model>>("/Directories/MeasureUnit/List", new Request { Condition = Condition });
+        if (result.IsOk)
+            Units = result.Data;
     }
 }

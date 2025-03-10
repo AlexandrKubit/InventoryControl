@@ -21,11 +21,15 @@ public partial class Index
 
     public async Task GetFiltersAsync()
     {
-        Filters = await HttpService.GetDataAsync<R.Filters.Request, R.Filters.Model>("/Warehouse/Receipt/Filters", new R.Filters.Request());
+        var result = await HttpService.GetDataAsync<R.Filters.Request, R.Filters.Model>("/Warehouse/Receipt/Filters", new R.Filters.Request());
+        if (result.IsOk)
+            Filters = result.Data;
     }
 
     public async Task GetListAsync()
     {
-        List = await HttpService.GetDataAsync<R.List.Request, R.List.Model>("/Warehouse/Receipt/List", new R.List.Request { Start = Start, End = End, Numbers = SelectedNumbers, ResourceGuids = SelectedResourceGuids, MeasureUnitGuids = SelectedMeasureUnitGuids });
+        var result = await HttpService.GetDataAsync<R.List.Request, R.List.Model>("/Warehouse/Receipt/List", new R.List.Request { Start = Start, End = End, Numbers = SelectedNumbers, ResourceGuids = SelectedResourceGuids, MeasureUnitGuids = SelectedMeasureUnitGuids });
+        if (result.IsOk)
+            List = result.Data;
     }
 }

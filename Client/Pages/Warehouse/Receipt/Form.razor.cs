@@ -17,9 +17,14 @@ public partial class Form
 
     public async Task GetAsync()
     {
-        Model = await HttpService.GetDataAsync<Request, Model>("/Warehouse/Receipt/Form", new Request { Guid = Guid.Parse(GuidString) });
-        if (Model.Document == null)
-            Model.Document = new Model.Receipt();
+        var result = await HttpService.GetDataAsync<Request, Model>("/Warehouse/Receipt/Form", new Request { Guid = Guid.Parse(GuidString) });
+        if (result.IsOk)
+        {
+            Model = result.Data;
+
+            if (Model.Document == null)
+                Model.Document = new Model.Receipt();
+        }
     }
 
     public async Task SaveAsync()
@@ -38,13 +43,16 @@ public partial class Form
                 Quantity = x.Quantity
             }).ToList()
         });
-        Navigation.NavigateTo("/receipts");
+
+        if(result.IsOk)
+            Navigation.NavigateTo("/receipts");
     }
 
     public async Task DeleteAsync()
     {
         var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Receipt.Delete.Request, Guid>("/Warehouse/Receipt/Delete", new Exchange.Commands.Warehouse.Receipt.Delete.Request { Guid = Model.Document.Guid });
-        Navigation.NavigateTo("/receipts");
+        if (result.IsOk) 
+            Navigation.NavigateTo("/receipts");
     }
 
     public void AddItem()

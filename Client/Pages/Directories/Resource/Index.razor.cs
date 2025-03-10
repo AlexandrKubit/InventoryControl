@@ -22,6 +22,8 @@ public partial class Index
 
     public async Task GetListAsync()
     {
-        Resources = await HttpService.GetDataAsync<Request, List<Model>>("/Directories/Resource/List", new Request { Condition = Condition });
+        var result = await HttpService.GetDataAsync<Request, List<Model>>("/Directories/Resource/List", new Request { Condition = Condition });
+        if (result.IsOk)
+            Resources = result.Data;
     }
 }

@@ -21,8 +21,8 @@
     <div class="row">
         <div class="col">
             <div class="input-group">
-                <input class="form-control" type="date" value="@Start.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs arg) => Start = DateTime.Parse(arg.Value.ToString()))" />
-                <input class="form-control" type="date" value="@End.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs arg) => End = DateTime.Parse(arg.Value.ToString()))" />
+                <input class="form-control" type="date" @bind="@Start"/>
+                <input class="form-control" type="date" @bind="@End"/>
             </div>
         </div>
         <div class="col">

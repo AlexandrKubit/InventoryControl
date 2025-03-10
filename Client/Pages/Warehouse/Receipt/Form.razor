@@ -23,11 +23,11 @@
         <tbody>
             <tr>
                 <td>Номер</td>
-                <td><input class="form-control" value="@Model.Document.Number" onchange="@((ChangeEventArgs args) => Model.Document.Number = (string)args.Value)" /></td>
+                <td><input class="form-control" @bind="@Model.Document.Number"/></td>
             </tr>
             <tr>
                 <td>Дата</td>
-                <td><input class="form-control" type="date" value="@Model.Document.Date.ToString("yyyy-MM-dd")" onchange="@((ChangeEventArgs args) => Model.Document.Date = DateTime.Parse(args.Value.ToString()))" /></td>
+                <td><input class="form-control" type="date" @bind="@Model.Document.Date"/></td>
             </tr>
         </tbody>
     </table>
@@ -63,7 +63,7 @@
                         </select>
                     </td>
                     <td>
-                        <input class="form-control" value="@item.Quantity" onchange="@((ChangeEventArgs arg) => item.Quantity = decimal.Parse(arg.Value.ToString()))" />
+                        <input class="form-control" @bind="@item.Quantity" />
                     </td>
                 </tr>
             }

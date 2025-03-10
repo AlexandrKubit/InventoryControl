@@ -1,5 +1,6 @@
 using Exchange.Queries.Warehouse.Shipment.Form;
 using Microsoft.AspNetCore.Components;
+using System.Net.Http.Json;
 using UI.Services;
 
 namespace UI.Pages.Warehouse.Shipment;
@@ -18,47 +19,52 @@ public partial class Form
 
     public async Task GetAsync()
     {
-        Model = await HttpService.GetDataAsync<Request, Model>("/Warehouse/Shipment/Form", new Request { Guid = Guid.Parse(GuidString) });
-        if (Model.Document == null)
+        var result = await HttpService.GetDataAsync<Request, Model>("/Warehouse/Shipment/Form", new Request { Guid = Guid.Parse(GuidString) });
+        if (result.IsOk)
         {
-            Model.Document = new Model.Shipment();
-            Model.Document.ClientGuid = Model.Clients.FirstOrDefault()?.Guid ?? Guid.Empty;
-        }
+            Model = result.Data;
 
-        Rows = new List<ItemRow>();
-
-        foreach (var b in Model.Balances)
-        {
-            Rows.Add(new ItemRow
+            if (Model.Document == null)
             {
-                Guid = Guid.Empty,
-                ResourceGuid = b.ResourceGuid,
-                MeasureUnitGuid = b.MeasureUnitGuid,
-                CurrentQuantity = 0,
-                MaxQuantity = b.Quantity
-            });
-        }
-
-        foreach (var i in Model.Items)
-        {
-            var row = Rows.FirstOrDefault(x => x.ResourceGuid == i.ResourceGuid && x.MeasureUnitGuid == i.MeasureUnitGuid);
-            if (row == null)
-            {
-                row = new ItemRow { ResourceGuid = i.ResourceGuid, MeasureUnitGuid = i.MeasureUnitGuid, CurrentQuantity = 0, MaxQuantity = 0 };
-                Rows.Add(row);
+                Model.Document = new Model.Shipment();
+                Model.Document.ClientGuid = Model.Clients.FirstOrDefault()?.Guid ?? Guid.Empty;
             }
 
-            row.Guid = i.Guid;
-            row.CurrentQuantity = i.Quantity;
-        }
+            Rows = new List<ItemRow>();
 
-        Rows = Rows.OrderByDescending(x => x.CurrentQuantity).ToList();
+            foreach (var b in Model.Balances)
+            {
+                Rows.Add(new ItemRow
+                {
+                    Guid = Guid.Empty,
+                    ResourceGuid = b.ResourceGuid,
+                    MeasureUnitGuid = b.MeasureUnitGuid,
+                    CurrentQuantity = 0,
+                    MaxQuantity = b.Quantity
+                });
+            }
+
+            foreach (var i in Model.Items)
+            {
+                var row = Rows.FirstOrDefault(x => x.ResourceGuid == i.ResourceGuid && x.MeasureUnitGuid == i.MeasureUnitGuid);
+                if (row == null)
+                {
+                    row = new ItemRow { ResourceGuid = i.ResourceGuid, MeasureUnitGuid = i.MeasureUnitGuid, CurrentQuantity = 0, MaxQuantity = 0 };
+                    Rows.Add(row);
+                }
+
+                row.Guid = i.Guid;
+                row.CurrentQuantity = i.Quantity;
+            }
+
+            Rows = Rows.OrderByDescending(x => x.CurrentQuantity).ToList();
+        }
     }
 
 
     public async Task<Guid> SaveAsync()
     {
-        var response = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.Save.Request, Guid>("/Warehouse/Shipment/Save", new Exchange.Commands.Warehouse.Shipment.Save.Request
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.Save.Request, Guid>("/Warehouse/Shipment/Save", new Exchange.Commands.Warehouse.Shipment.Save.Request
         {
             Guid = Model.Document.Guid,
             Date = Model.Document.Date,
@@ -74,19 +80,24 @@ public partial class Form
             }).ToList()
         });
 
-        return response;
+        if (result.IsOk)
+            return result.Data;
+        else
+            return Guid.Empty;
     }
 
     public async Task SaveAsyncWithNavigate()
     {
-        await SaveAsync();
-        Navigation.NavigateTo("/shipments");
+        var guid = await SaveAsync();
+        if(guid != Guid.Empty)
+            Navigation.NavigateTo("/shipments");
     }
 
     public async Task DeleteAsync()
     {
-        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.Delete.Request, Guid>("/Warehouse/Shipment/Delete", new Exchange.Commands.Warehouse.Shipment.Delete.Request { Guid = Model.Document.Guid });
-        Navigation.NavigateTo("/shipments");
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.Delete.Request, Guid>("/Warehouse/Shipment/Delete", new Exchange.Commands.Warehouse.Shipment.Delete.Request { Guid = Model.Document.Guid});
+        if(result.IsOk)
+            Navigation.NavigateTo("/shipments");
     }
 
     public async Task CangeConditionAsync()
@@ -94,17 +105,12 @@ public partial class Form
         if (Model.Document.Condition != 2)
             Model.Document.Guid = await SaveAsync();
 
-        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request, Guid>("/Warehouse/Shipment/ChangeCondition", new Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request { Guid = Model.Document.Guid });
-        Navigation.NavigateTo("/shipments");
-    }
-
-    private void SetQuantity(ChangeEventArgs e, ItemRow row)
-    {
-        decimal.TryParse(e.Value?.ToString(), out var inputValue);
-        if (inputValue > row.MaxQuantity)
-            inputValue = 0;
-        row.CurrentQuantity = inputValue;
-        StateHasChanged();
+        if (Model.Document.Guid != Guid.Empty)
+        {
+            var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request, Guid>("/Warehouse/Shipment/ChangeCondition", new Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request { Guid = Model.Document.Guid });
+            if (result.IsOk)
+                Navigation.NavigateTo("/shipments");
+        }
     }
 
     public class ItemRow()
@@ -112,7 +118,14 @@ public partial class Form
         public Guid Guid { get; set; }
         public Guid ResourceGuid { get; set; }
         public Guid MeasureUnitGuid { get; set; }
-        public decimal CurrentQuantity { get; set; }
+
+        private decimal currentQuantity;
+        public decimal CurrentQuantity
+        {
+            get { return currentQuantity; }
+            set { currentQuantity = value > MaxQuantity ? MaxQuantity : value; }
+        }
+
         public decimal MaxQuantity { get; set; }
     }
 }

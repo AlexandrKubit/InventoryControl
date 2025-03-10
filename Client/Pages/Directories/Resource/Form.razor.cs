@@ -23,25 +23,30 @@ public partial class Form
         }
         else
         {
-            Resource = await HttpService.GetDataAsync<Request, Model>("/Directories/Resource/Form", new Request { Guid = Guid.Parse(GuidString) });
+            var result = await HttpService.GetDataAsync<Request, Model>("/Directories/Resource/Form", new Request { Guid = Guid.Parse(GuidString) });
+            if (result.IsOk)
+                Resource = result.Data;
         }
     }
 
     public async Task SaveAsync()
     {
         var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.Resource.Save.Request, Guid>("/Directories/Resource/Save", new Exchange.Commands.Directories.Resource.Save.Request { Guid = Resource.Guid, Name = Resource.Name });
-        Navigation.NavigateTo("/resources/1");
+        if (result.IsOk) 
+            Navigation.NavigateTo("/resources/1");
     }
 
     public async Task DeleteAsync()
     {
         var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.Resource.Delete.Request, Guid>("/Directories/Resource/Delete", new Exchange.Commands.Directories.Resource.Delete.Request { Guid = Resource.Guid });
-        Navigation.NavigateTo("/resources/1");
+        if (result.IsOk) 
+            Navigation.NavigateTo("/resources/1");
     }
 
     public async Task ChangeConditionAsync()
     {
         var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.Resource.ChangeCondition.Request, Guid>("/Directories/Resource/ChangeCondition", new Exchange.Commands.Directories.Resource.ChangeCondition.Request { Guid = Resource.Guid });
-        Navigation.NavigateTo("/resources/1");
+        if (result.IsOk) 
+            Navigation.NavigateTo("/resources/1");
     }
 }

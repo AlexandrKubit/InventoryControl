@@ -32,11 +32,11 @@
         <tbody>
             <tr>
                 <td>Наименование</td>
-                <td><input class="form-control" value="@Client.Name" onchange="@((ChangeEventArgs args) => Client.Name = (string)args.Value)" /></td>
+                <td><input class="form-control" @bind="@Client.Name"/></td>
             </tr>
             <tr>
                 <td>Адрес</td>
-                <td><input class="form-control" value="@Client.Address" onchange="@((ChangeEventArgs args) => Client.Address = (string)args.Value)" /></td>
+                <td><input class="form-control" @bind="@Client.Address"/></td>
             </tr>
         </tbody>
     </table>
