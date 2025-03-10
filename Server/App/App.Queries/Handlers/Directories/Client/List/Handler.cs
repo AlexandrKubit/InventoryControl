@@ -15,11 +15,11 @@ public class Handler : IRequestHandler<Request, IEnumerable<Model>>
         var sql = @$"
             SELECT guid, name, address
             FROM clients
-            WHERE condition = {request.Condition}
+            WHERE condition = @Condition
         ";
 
         using var connection = Connection.Get();
-        var model = await connection.QueryAsync<Model>(sql);
+        var model = await connection.QueryAsync<Model>(sql, new { request.Condition });
 
         return model;
     }

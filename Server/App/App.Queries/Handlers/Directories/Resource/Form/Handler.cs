@@ -15,11 +15,11 @@ public class Handler : IRequestHandler<Request, Model>
         var sql = @$"
             SELECT guid, name, condition
             FROM resources
-            WHERE guid = '{request.Guid}'
+            WHERE guid = @Guid
         ";
 
         using var connection = Connection.Get();
-        var model = await connection.QueryFirstAsync<Model>(sql);
+        var model = await connection.QueryFirstAsync<Model>(sql, new { request.Guid });
 
         return model;
     }
