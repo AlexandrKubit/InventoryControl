@@ -1,4 +1,4 @@
-﻿namespace App.Base.Mediator;
+﻿namespace Exchange;
 
 public interface IBaseRequest
 {

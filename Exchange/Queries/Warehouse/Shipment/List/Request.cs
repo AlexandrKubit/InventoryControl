@@ -1,6 +1,6 @@
 ﻿namespace Exchange.Queries.Warehouse.Shipment.List;
 
-using App.Base.Mediator;
+
 
 public class Request : IRequest<Model>
 {

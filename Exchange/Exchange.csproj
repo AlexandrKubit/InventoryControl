@@ -6,8 +6,4 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference PrivateAssets="All" Include="..\Server\App\App.Base\App.Base.csproj" />
-  </ItemGroup>
-
 </Project>

@@ -1,4 +1,6 @@
-﻿namespace App.Base.Mediator;
+﻿using Exchange;
+
+namespace App.Base.Mediator;
 
 public interface IBaseRequestValidator
 {

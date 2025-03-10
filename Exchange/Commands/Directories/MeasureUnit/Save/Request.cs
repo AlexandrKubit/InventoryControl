@@ -1,6 +1,6 @@
 ﻿namespace Exchange.Commands.Directories.MeasureUnit.Save;
 
-using App.Base.Mediator;
+
 
 public class Request : IRequest<Guid>
 {

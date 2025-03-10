@@ -1,6 +1,6 @@
 ﻿namespace Exchange.Commands.Directories.MeasureUnit.ChangeCondition;
 
-using App.Base.Mediator;
+
 
 public class Request : IRequest<Guid>
 {

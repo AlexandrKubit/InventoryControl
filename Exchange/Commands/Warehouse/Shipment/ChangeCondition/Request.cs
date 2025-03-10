@@ -1,6 +1,6 @@
 ﻿namespace Exchange.Commands.Warehouse.Shipment.ChangeCondition;
 
-using App.Base.Mediator;
+
 
 public class Request : IRequest<Guid>
 {

@@ -1,6 +1,6 @@
 ﻿namespace Exchange.Queries.Directories.MeasureUnit.List;
 
-using App.Base.Mediator;
+
 
 public class Request : IRequest<IEnumerable<Model>>
 {

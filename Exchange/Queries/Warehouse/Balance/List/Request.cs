@@ -1,6 +1,6 @@
 ﻿namespace Exchange.Queries.Warehouse.Balance.List;
 
-using App.Base.Mediator;
+
 
 public class Request : IRequest<Model>
 {
