@@ -8,7 +8,7 @@ public class Validator : IRequestValidator<Request, Guid>
 {
     public void Validate(Request request)
     {
-        if (string.IsNullOrEmpty(request.Number))
+        if (string.IsNullOrEmpty(request.Number.Trim()))
             throw new ValidationException("Не указан номер");
 
         if (request.Date == DateTime.MinValue)
@@ -16,5 +16,11 @@ public class Validator : IRequestValidator<Request, Guid>
 
         if (request.ClientGuid == Guid.Empty)
             throw new ValidationException("Не указан клиент");
+
+        if (request.Items.Count <= 0 
+            || request.Items.Any(x => x.ResourceGuid == Guid.Empty) 
+            || request.Items.Any(x => x.MeasureUnitGuid == Guid.Empty) 
+            || request.Items.Any(x => x.Quantity <= 0))
+            throw new ValidationException("Неправильно заполнены ресурсы");
     }
 }
