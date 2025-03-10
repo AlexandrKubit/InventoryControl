@@ -1,6 +1,6 @@
 using Exchange.Queries.Directories.Client.List;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http.Json;
+using UI.Services;
 
 namespace UI.Pages.Directories.Client;
 public partial class Index
@@ -22,7 +22,6 @@ public partial class Index
 
     public async Task GetListAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Client/List", new Request { Condition = Condition });
-        Clients = await result.Content.ReadFromJsonAsync<List<Model>>();
+        Clients = await HttpService.GetDataAsync<Request, List<Model>>("/Directories/Client/List", new Request { Condition = Condition });
     }
 }

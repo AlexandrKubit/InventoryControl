@@ -1,6 +1,6 @@
 using Exchange.Queries.Directories.MeasureUnit.Form;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http.Json;
+using UI.Services;
 
 namespace UI.Pages.Directories.MeasureUnit;
 public partial class Form
@@ -23,26 +23,25 @@ public partial class Form
         }
         else
         {
-            var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/Form", new Request { Guid = Guid.Parse(GuidString) });
-            Unit = await result.Content.ReadFromJsonAsync<Model>();
+            Unit = await HttpService.GetDataAsync<Request, Model>("/Directories/MeasureUnit/Form", new Request { Guid = Guid.Parse(GuidString) });
         }
     }
 
     public async Task SaveAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/Save", new Exchange.Commands.Directories.MeasureUnit.Save.Request { Guid = Unit.Guid, Name = Unit.Name });
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.MeasureUnit.Save.Request, Guid>("/Directories/MeasureUnit/Save", new Exchange.Commands.Directories.MeasureUnit.Save.Request { Guid = Unit.Guid, Name = Unit.Name });
         Navigation.NavigateTo("/units/1");
     }
 
     public async Task DeleteAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/Delete", new Exchange.Commands.Directories.MeasureUnit.Delete.Request { Guid = Unit.Guid});
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.MeasureUnit.Delete.Request, Guid>("/Directories/MeasureUnit/Delete", new Exchange.Commands.Directories.MeasureUnit.Delete.Request { Guid = Unit.Guid });
         Navigation.NavigateTo("/units/1");
     }
 
     public async Task ChangeConditionAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/ChangeCondition", new Exchange.Commands.Directories.MeasureUnit.ChangeCondition.Request { Guid = Unit.Guid });
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.MeasureUnit.ChangeCondition.Request, Guid>("/Directories/MeasureUnit/ChangeCondition", new Exchange.Commands.Directories.MeasureUnit.ChangeCondition.Request { Guid = Unit.Guid });
         Navigation.NavigateTo("/units/1");
     }
 }

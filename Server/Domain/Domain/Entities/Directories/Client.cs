@@ -97,7 +97,7 @@ public sealed class Client : BaseEntity
 
         var shipments = data.Shipment.List.Where(x => clientGuids.Contains(x.ClientGuid));
         if (shipments.Any())
-            throw new Exception("Невозможно удалить клиента, т.к. в системе существует отгрузка, использующая его");
+            throw new DomainException("Невозможно удалить клиента, т.к. в системе существует отгрузка, использующая его");
 
         foreach (var client in clients)
             client.Remove();

@@ -1,0 +1,50 @@
+﻿<div class="toastcontainer">
+    @foreach(var message in messages)
+    {
+        <div class="toastmessage">@message</div>
+    }
+</div>
+
+<style>
+    .toastcontainer {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        max-width: 300px;
+        z-index: 1000;
+    }
+
+    .toastmessage{
+        background-color: darkred;
+        color: #fff;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        margin:3px;
+    }
+</style>
+
+@code {
+    private static List<string> messages = new List<string>();
+    private static event Action MessagesChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        MessagesChanged += UpdateState;
+        await base.OnInitializedAsync();
+    }
+
+    public static async Task AddMessage(string msg)
+    {
+        messages.Add(msg);
+        MessagesChanged.Invoke();
+        await Task.Delay(4000);
+        messages.Remove(msg);
+        MessagesChanged.Invoke();
+    }
+
+    private void UpdateState()
+    {
+        StateHasChanged();
+    }
+}

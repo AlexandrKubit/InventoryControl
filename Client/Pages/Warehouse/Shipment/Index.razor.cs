@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using UI.Services;
 using R = Exchange.Queries.Warehouse.Shipment;
 
 namespace UI.Pages.Warehouse.Shipment;
@@ -22,13 +23,11 @@ public partial class Index
 
     public async Task GetFiltersAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/Filters", new R.Filters.Request());
-        Filters = await result.Content.ReadFromJsonAsync<R.Filters.Model>();
+        Filters = await HttpService.GetDataAsync<R.Filters.Request, R.Filters.Model>("/Warehouse/Shipment/Filters", new R.Filters.Request());
     }
 
     public async Task GetListAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/List", new R.List.Request { Start = Start, End = End, Numbers = SelectedNumbers, ClientGuids = SelectedClientGuids, ResourceGuids = SelectedResourceGuids, MeasureUnitGuids = SelectedMeasureUnitGuids });
-        List = await result.Content.ReadFromJsonAsync<R.List.Model>();
+        List = await HttpService.GetDataAsync<R.List.Request, R.List.Model>("/Warehouse/Shipment/List", new R.List.Request { Start = Start, End = End, Numbers = SelectedNumbers, ClientGuids = SelectedClientGuids, ResourceGuids = SelectedResourceGuids, MeasureUnitGuids = SelectedMeasureUnitGuids });
     }
 }

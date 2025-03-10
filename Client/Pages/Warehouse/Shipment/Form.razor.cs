@@ -1,6 +1,6 @@
 using Exchange.Queries.Warehouse.Shipment.Form;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http.Json;
+using UI.Services;
 
 namespace UI.Pages.Warehouse.Shipment;
 public partial class Form
@@ -18,8 +18,7 @@ public partial class Form
 
     public async Task GetAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/Form", new Request { Guid = Guid.Parse(GuidString) });
-        Model = await result.Content.ReadFromJsonAsync<Model>();
+        Model = await HttpService.GetDataAsync<Request, Model>("/Warehouse/Shipment/Form", new Request { Guid = Guid.Parse(GuidString) });
         if (Model.Document == null)
         {
             Model.Document = new Model.Shipment();
@@ -28,22 +27,22 @@ public partial class Form
 
         Rows = new List<ItemRow>();
 
-        foreach(var b in Model.Balances)
+        foreach (var b in Model.Balances)
         {
             Rows.Add(new ItemRow
             {
                 Guid = Guid.Empty,
-                ResourceGuid= b.ResourceGuid,
+                ResourceGuid = b.ResourceGuid,
                 MeasureUnitGuid = b.MeasureUnitGuid,
                 CurrentQuantity = 0,
-                MaxQuantity = b.Quantity 
+                MaxQuantity = b.Quantity
             });
         }
 
-        foreach(var i in Model.Items)
+        foreach (var i in Model.Items)
         {
             var row = Rows.FirstOrDefault(x => x.ResourceGuid == i.ResourceGuid && x.MeasureUnitGuid == i.MeasureUnitGuid);
-            if(row == null)
+            if (row == null)
             {
                 row = new ItemRow { ResourceGuid = i.ResourceGuid, MeasureUnitGuid = i.MeasureUnitGuid, CurrentQuantity = 0, MaxQuantity = 0 };
                 Rows.Add(row);
@@ -53,13 +52,13 @@ public partial class Form
             row.CurrentQuantity = i.Quantity;
         }
 
-        Rows = Rows.OrderByDescending(x=> x.CurrentQuantity).ToList();
+        Rows = Rows.OrderByDescending(x => x.CurrentQuantity).ToList();
     }
 
 
     public async Task<Guid> SaveAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/Save", new Exchange.Commands.Warehouse.Shipment.Save.Request
+        var response = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.Save.Request, Guid>("/Warehouse/Shipment/Save", new Exchange.Commands.Warehouse.Shipment.Save.Request
         {
             Guid = Model.Document.Guid,
             Date = Model.Document.Date,
@@ -75,8 +74,6 @@ public partial class Form
             }).ToList()
         });
 
-        var response = await result.Content.ReadFromJsonAsync<Guid>();
-
         return response;
     }
 
@@ -88,7 +85,7 @@ public partial class Form
 
     public async Task DeleteAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/Delete", new Exchange.Commands.Warehouse.Shipment.Delete.Request { Guid = Model.Document.Guid});
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.Delete.Request, Guid>("/Warehouse/Shipment/Delete", new Exchange.Commands.Warehouse.Shipment.Delete.Request { Guid = Model.Document.Guid });
         Navigation.NavigateTo("/shipments");
     }
 
@@ -97,7 +94,7 @@ public partial class Form
         if (Model.Document.Condition != 2)
             Model.Document.Guid = await SaveAsync();
 
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Shipment/ChangeCondition", new Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request { Guid = Model.Document.Guid });
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request, Guid>("/Warehouse/Shipment/ChangeCondition", new Exchange.Commands.Warehouse.Shipment.ChangeCondition.Request { Guid = Model.Document.Guid });
         Navigation.NavigateTo("/shipments");
     }
 

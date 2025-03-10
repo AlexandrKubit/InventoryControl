@@ -75,7 +75,7 @@ public sealed class Resource : BaseEntity
         var shipmentItems = data.ShipmentItem.List.Where(x => resourceGuids.Contains(x.ResourceGuid));
 
         if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
-            throw new Exception("Невозможно удалить ресурс, так как он используется");
+            throw new DomainException("Невозможно удалить ресурс, так как он используется");
 
         foreach (var resource in resources)
             resource.Remove();

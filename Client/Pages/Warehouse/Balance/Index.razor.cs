@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+using UI.Services;
 using B = Exchange.Queries.Warehouse.Balance;
 
 namespace UI.Pages.Warehouse.Balance;
@@ -18,13 +18,11 @@ public partial class Index
 
     public async Task GetFiltersAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Balance/Filters", new B.Filters.Request());
-        Filters = await result.Content.ReadFromJsonAsync<B.Filters.Model>();
+        Filters = await HttpService.GetDataAsync<B.Filters.Request, B.Filters.Model>("/Warehouse/Balance/Filters", new B.Filters.Request());
     }
 
     public async Task GetListAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Balance/List", new B.List.Request { ResourceGuids = SelectedResourceGuids, MeasureUnitGuids = SelectedMeasureUnitGuids });
-        List = await result.Content.ReadFromJsonAsync<B.List.Model>();
+        List = await HttpService.GetDataAsync<B.List.Request, B.List.Model>("/Warehouse/Balance/List", new B.List.Request { ResourceGuids = SelectedResourceGuids, MeasureUnitGuids = SelectedMeasureUnitGuids });
     }
 }

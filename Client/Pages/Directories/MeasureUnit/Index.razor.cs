@@ -1,6 +1,6 @@
 using Exchange.Queries.Directories.MeasureUnit.List;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http.Json;
+using UI.Services;
 
 namespace UI.Pages.Directories.MeasureUnit;
 public partial class Index
@@ -22,7 +22,6 @@ public partial class Index
 
     public async Task GetListAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/MeasureUnit/List", new Request { Condition = Condition });
-        Units = await result.Content.ReadFromJsonAsync<List<Model>>();
+        Units = await HttpService.GetDataAsync<Request, List<Model>>("/Directories/MeasureUnit/List", new Request { Condition = Condition });
     }
 }

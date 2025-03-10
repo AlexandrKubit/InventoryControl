@@ -1,6 +1,6 @@
 using Exchange.Queries.Directories.Resource.Form;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http.Json;
+using UI.Services;
 
 namespace UI.Pages.Directories.Resource;
 public partial class Form
@@ -23,26 +23,25 @@ public partial class Form
         }
         else
         {
-            var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/Form", new Request { Guid = Guid.Parse(GuidString) });
-            Resource = await result.Content.ReadFromJsonAsync<Model>();
+            Resource = await HttpService.GetDataAsync<Request, Model>("/Directories/Resource/Form", new Request { Guid = Guid.Parse(GuidString) });
         }
     }
 
     public async Task SaveAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/Save", new Exchange.Commands.Directories.Resource.Save.Request { Guid = Resource.Guid, Name = Resource.Name });
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.Resource.Save.Request, Guid>("/Directories/Resource/Save", new Exchange.Commands.Directories.Resource.Save.Request { Guid = Resource.Guid, Name = Resource.Name });
         Navigation.NavigateTo("/resources/1");
     }
 
     public async Task DeleteAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/Delete", new Exchange.Commands.Directories.Resource.Delete.Request { Guid = Resource.Guid});
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.Resource.Delete.Request, Guid>("/Directories/Resource/Delete", new Exchange.Commands.Directories.Resource.Delete.Request { Guid = Resource.Guid });
         Navigation.NavigateTo("/resources/1");
     }
 
     public async Task ChangeConditionAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Directories/Resource/ChangeCondition", new Exchange.Commands.Directories.Resource.ChangeCondition.Request { Guid = Resource.Guid });
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Directories.Resource.ChangeCondition.Request, Guid>("/Directories/Resource/ChangeCondition", new Exchange.Commands.Directories.Resource.ChangeCondition.Request { Guid = Resource.Guid });
         Navigation.NavigateTo("/resources/1");
     }
 }

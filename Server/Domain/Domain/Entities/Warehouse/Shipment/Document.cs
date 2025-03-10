@@ -85,12 +85,13 @@ public sealed class Document : BaseEntity
     public static void UpdateRange(List<UpdateArg> args, IData data)
     {
         if (args.Any(x => x.Document.Condition == Conditions.Signed))
-            throw new DomainException("Невозможно отредактировать подписанную накладную");
+            throw new DomainException("Невозможно отредактировать подписанную отгрузку");
 
         foreach (var arg in args)
         {
             arg.Document.Number = arg.Number;
             arg.Document.Date = arg.Date;
+            arg.Document.ClientGuid = arg.ClientGuid;
             arg.Document.Update();
         }
 
@@ -104,7 +105,7 @@ public sealed class Document : BaseEntity
     public static void DeleteRange(List<Document> shipments, IData data)
     {
         if (shipments.Any(x => x.Condition == Conditions.Signed))
-            throw new DomainException("Невозможно удалить подписанную накладную");
+            throw new DomainException("Невозможно удалить подписанную отгрузку");
 
         var shipmentGuids = shipments.Select(x => x.Guid).ToList();       
         var items = data.ShipmentItem.List.Where(x => shipmentGuids.Contains(x.ShipmentGuid)).ToList();

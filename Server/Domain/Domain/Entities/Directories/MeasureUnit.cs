@@ -76,7 +76,7 @@ public sealed class MeasureUnit : BaseEntity
         var shipmentItems = data.ShipmentItem.List.Where(x => unitGuids.Contains(x.MeasureUnitGuid));
 
         if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
-            throw new Exception("Невозможно удалить единицу измерения, так как она используется");
+            throw new DomainException("Невозможно удалить единицу измерения, так как она используется");
 
         foreach (var unit in units)
             unit.Remove();

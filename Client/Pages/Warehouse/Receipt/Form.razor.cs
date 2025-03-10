@@ -1,6 +1,6 @@
 using Exchange.Queries.Warehouse.Receipt.Form;
 using Microsoft.AspNetCore.Components;
-using System.Net.Http.Json;
+using UI.Services;
 
 namespace UI.Pages.Warehouse.Receipt;
 public partial class Form
@@ -17,15 +17,14 @@ public partial class Form
 
     public async Task GetAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Receipt/Form", new Request { Guid = Guid.Parse(GuidString) });
-        Model = await result.Content.ReadFromJsonAsync<Model>();
+        Model = await HttpService.GetDataAsync<Request, Model>("/Warehouse/Receipt/Form", new Request { Guid = Guid.Parse(GuidString) });
         if (Model.Document == null)
             Model.Document = new Model.Receipt();
     }
 
     public async Task SaveAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Receipt/Save", new Exchange.Commands.Warehouse.Receipt.Save.Request
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Receipt.Save.Request, Guid>("/Warehouse/Receipt/Save", new Exchange.Commands.Warehouse.Receipt.Save.Request
         {
             Guid = Model.Document.Guid,
             Date = Model.Document.Date,
@@ -44,7 +43,7 @@ public partial class Form
 
     public async Task DeleteAsync()
     {
-        var result = await httpClient.PostAsJsonAsync($"{Settings.Url}/Warehouse/Receipt/Delete", new Exchange.Commands.Warehouse.Receipt.Delete.Request { Guid = Model.Document.Guid});
+        var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Receipt.Delete.Request, Guid>("/Warehouse/Receipt/Delete", new Exchange.Commands.Warehouse.Receipt.Delete.Request { Guid = Model.Document.Guid });
         Navigation.NavigateTo("/receipts");
     }
 
