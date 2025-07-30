@@ -8,7 +8,7 @@ public class Validator : IRequestValidator<Request, Guid>
 {
     public void Validate(Request request)
     {
-        if (string.IsNullOrEmpty(request.Number.Trim()))
+        if (string.IsNullOrEmpty(request.Number))
             throw new ValidationException("Не указан номер");
 
         if (request.Date == DateTime.MinValue)

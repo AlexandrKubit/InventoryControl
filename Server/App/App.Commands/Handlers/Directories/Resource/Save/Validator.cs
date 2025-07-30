@@ -8,7 +8,7 @@ public class Validator : IRequestValidator<Request, Guid>
 {
     public void Validate(Request request)
     {
-        if (string.IsNullOrEmpty(request.Name.Trim()))
+        if (string.IsNullOrEmpty(request.Name))
             throw new ValidationException("Не указано наименование");
     }
 }
