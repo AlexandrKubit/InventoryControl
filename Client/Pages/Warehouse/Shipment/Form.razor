@@ -108,8 +108,8 @@ else
             <tbody>
                 @foreach (var row in Rows)
                 {
-                    var resource = Model.Resources.FirstOrDefault(x => x.Guid == row.ResourceGuid);
-                    var unit = Model.MeasureUnits.FirstOrDefault(x => x.Guid == row.MeasureUnitGuid);
+                    var resource = Model.Resources.FirstOrDefault(x => x.Guid == row.ResourceGuid) ?? new Exchange.Queries.Warehouse.Shipment.Form.Model.Select();
+                    var unit = Model.MeasureUnits.FirstOrDefault(x => x.Guid == row.MeasureUnitGuid) ?? new Exchange.Queries.Warehouse.Shipment.Form.Model.Select();
 
                     <tr>
                         <td>@resource.Name</td>
