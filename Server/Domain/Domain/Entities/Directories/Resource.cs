@@ -89,7 +89,7 @@ public sealed class Resource : BaseEntity
             Update();
         }
         else
-            throw new DomainException("Невозможно перевести в архив, т.к. клиент уже находится в архиве");
+            throw new DomainException("Невозможно перевести в архив, т.к. ресурс уже находится в архиве");
     }
 
     public void ToWork()
@@ -100,6 +100,6 @@ public sealed class Resource : BaseEntity
             Update();
         }
         else
-            throw new DomainException("Невозможно перевести в работу, т.к. клиент уже находится в работе");
+            throw new DomainException("Невозможно перевести в работу, т.к. ресурс уже находится в работе");
     }
 }
