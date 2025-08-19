@@ -5,7 +5,7 @@ using Infrastructure.Base;
 using Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-internal class BalanceRepository : BaseRepository<Balance>, App.Commands.Repositories.IBalanceRepository
+internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
 {
     public BalanceRepository(Context context)
     {

@@ -3,6 +3,7 @@
 using Common.Exceptions;
 using Domain.Base;
 using System;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Клиент
@@ -13,6 +14,8 @@ public sealed class Client : BaseEntity
     {
         protected static Client Restore(Guid guid, string name, string address, Conditions condition)
             => new(guid, name, address, condition);
+
+        public Task FillByNames(List<string> names);
     }
 
 
@@ -38,23 +41,11 @@ public sealed class Client : BaseEntity
     // для улучшения производительности в сложных сценариях имеет смысл создавать методы так
     // чтобы они сразу же умели работать с массивом данных, и воспринимать Mhetod как частынй случай MhetodRange
     public record CreateArg(string Name, string Address);
-
-    //public abstract class CreateStrategy(List<CreateArg> _args)
-    //{
-    //    internal List<CreateArg> args = _args;
-    //    internal List<string> names;
-    //    protected abstract Task FillByNamesAsync(List<string> names);
-
-    //    protected async Task Execute()
-    //    {
-    //        names = args.Select(x => x.Name).ToList();
-    //        await FillByNamesAsync(names);
-    //    }
-    //}
-
-    public static List<Client> CreateRange(List<CreateArg> args, IData data)
+    public static async Task<List<Client>> CreateRange(List<CreateArg> args, IData data)
     {
         var names = args.Select(x => x.Name).ToList();
+        await data.Client.FillByNames(names);
+
         if (data.Client.List.Any(x => names.Contains(x.Name)))
             throw new DomainException("В системе уже зарегистрирован клиент с таким наименованием");
 
@@ -70,58 +61,79 @@ public sealed class Client : BaseEntity
         return clients;
     }
 
-    public record UpdateArg(Client Client)
+    public record UpdateArg(Guid Guid, string Name, string Address);
+    public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        public string Name = Client.Name;
-        public string Address = Client.Address;
-    };
-    public static void UpdateRange(List<UpdateArg> args, IData data)
-    {
-        foreach (var arg in args)
+        var guids = args.Select(x => x.Guid).Distinct().ToList();
+        await data.Client.FillByGuids(guids);
+
+        var names = args.Select(x => x.Name).Distinct().ToList();
+        await data.Client.FillByNames(names);
+
+        var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var client in clients)
         {
-            arg.Client.Name = arg.Name;
-            arg.Client.Address = arg.Address;
-            arg.Client.Update();
+            var arg = args.First(x => x.Guid == client.Guid);
+
+            client.Name = arg.Name;
+            client.Address = arg.Address;
+            client.Update();
         }
 
         foreach (var arg in args)
         {
-            if (data.Client.List.Any(x => x.Name == arg.Name && x.Guid != arg.Client.Guid))
+            if (data.Client.List.Any(x => x.Name == arg.Name && x.Guid != arg.Guid))
                 throw new DomainException("В системе уже зарегистрирован клиент с таким наименованием");
         }
     }
 
-    public static void DeleteRange(List<Client> clients, IData data)
+    public static async Task DeleteRange(List<Guid> guids, IData data)
     {
-        var clientGuids = clients.Select(x => x.Guid).ToList();
+        await data.Shipment.FillByClients(guids);
+        var shipments = data.Shipment.List.Where(x => guids.Contains(x.ClientGuid));
 
-        var shipments = data.Shipment.List.Where(x => clientGuids.Contains(x.ClientGuid));
         if (shipments.Any())
             throw new DomainException("Невозможно удалить клиента, т.к. в системе существует отгрузка, использующая его");
+
+        await data.Client.FillByGuids(guids);
+        var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var client in clients)
             client.Remove();
     }
 
-    public void ToArchive()
+    public static async Task ToArchiveRange(List<Guid> guids, IData data)
     {
-        if (Condition == Conditions.Work)
+        await data.Client.FillByGuids(guids);
+        var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var client in clients)
         {
-            Condition = Conditions.Archive;
-            Update();
+            if (client.Condition == Conditions.Work)
+            {
+                client.Condition = Conditions.Archive;
+                client.Update();
+            }
+            else
+                throw new DomainException("Невозможно перевести в архив, т.к. клиент уже находится в архиве");
         }
-        else
-            throw new DomainException("Невозможно перевести в архив, т.к. клиент уже находится в архиве");
     }
 
-    public void ToWork()
+    public static async Task ToWorkRange(List<Guid> guids, IData data)
     {
-        if (Condition == Conditions.Archive)
+        await data.Client.FillByGuids(guids);
+        var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var client in clients)
         {
-            Condition = Conditions.Work;
-            Update();
+            if (client.Condition == Conditions.Archive)
+            {
+                client.Condition = Conditions.Work;
+                client.Update();
+            }
+            else
+                throw new DomainException("Невозможно перевести в работу, т.к. клиент уже находится в работе");
         }
-        else
-            throw new DomainException("Невозможно перевести в работу, т.к. клиент уже находится в работе");
     }
 }

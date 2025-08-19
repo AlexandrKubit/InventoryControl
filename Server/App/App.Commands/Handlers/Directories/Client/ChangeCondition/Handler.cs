@@ -1,24 +1,24 @@
 ﻿namespace App.Commands.Handlers.Directories.Client.ChangeCondition;
 
 using App.Base.Mediator;
-using App.Commands.Base;
 using Exchange.Commands.Directories.Client.ChangeCondition;
 using System.Threading.Tasks;
 using Domain.Entities.Directories;
+using Domain.Base;
 
 [RequestRoute("/Directories/Client/ChangeCondition", RequestRouteAttribute.Types.Command)]
 public class Handler : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
     {
-        var uow = (IUnitOfWork)provider.GetService(typeof(IUnitOfWork));
-        await uow.Client.FillByGuids([request.Guid]);
-        var client = uow.Client.List.FirstOrDefault(x => x.Guid == request.Guid);
+        var data = (IData)provider.GetService(typeof(IData));
+        await data.Client.FillByGuids([request.Guid]);
+        var client = data.Client.List.FirstOrDefault(x => x.Guid == request.Guid);
 
         if (client.Condition == Client.Conditions.Work)
-            client.ToArchive();
+           await Client.ToArchiveRange([request.Guid], data);
         else
-            client.ToWork();
+            await Client.ToWorkRange([request.Guid], data);
 
         return client.Guid;
     }

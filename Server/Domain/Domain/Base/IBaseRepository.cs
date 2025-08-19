@@ -9,4 +9,5 @@ public interface IBaseRepository<TEntity> where TEntity : BaseEntity
 
     public IEnumerable<TEntity> List { get; }
     public void AddEntity(TEntity entity);
+    public Task FillByGuids(List<Guid> guids);
 }

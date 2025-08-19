@@ -5,7 +5,7 @@ using Infrastructure.Base;
 using Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-internal class ReceiptRepository : BaseRepository<Document>, App.Commands.Repositories.IReceiptRepository
+internal class ReceiptRepository : BaseRepository<Document>, Document.IRepository
 {
     public ReceiptRepository(Context context)
     {

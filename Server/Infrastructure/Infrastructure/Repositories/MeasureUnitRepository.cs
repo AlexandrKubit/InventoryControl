@@ -5,7 +5,7 @@ using Infrastructure.Base;
 using Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, App.Commands.Repositories.IMeasureUnitRepository
+internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.IRepository
 {
     public MeasureUnitRepository(Context context)
     {

@@ -5,7 +5,7 @@ using Infrastructure.Base;
 using Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-internal class ClientRepository : BaseRepository<Client>, App.Commands.Repositories.IClientRepository
+internal class ClientRepository : BaseRepository<Client>, Client.IRepository
 {
     public ClientRepository(Context context)
     {

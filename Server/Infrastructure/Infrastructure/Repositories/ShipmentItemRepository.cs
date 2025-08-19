@@ -5,7 +5,7 @@ using Infrastructure.Base;
 using Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 
-internal class ShipmentItemRepository : BaseRepository<Item>, App.Commands.Repositories.IShipmentItemRepository
+internal class ShipmentItemRepository : BaseRepository<Item>, Item.IRepository
 {
     public ShipmentItemRepository(Context context)
     {

@@ -1,7 +1,7 @@
 ﻿namespace App.Commands.Handlers.Directories.MeasureUnit.Save;
 
 using App.Base.Mediator;
-using App.Commands.Base;
+using Domain.Base;
 using Domain.Entities.Directories;
 using Exchange.Commands.Directories.MeasureUnit.Save;
 using System.Threading.Tasks;
@@ -11,23 +11,17 @@ public class Handler : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
     {
-        var uow = (IUnitOfWork)provider.GetService(typeof(IUnitOfWork));
+        var data = (IData)provider.GetService(typeof(IData));
 
-        await uow.MeasureUnit.FillByNames([request.Name]);
         if (request.Guid == Guid.Empty)
         {
-            return MeasureUnit.CreateRange([request.Name], uow).First().Guid;
+            var units = await MeasureUnit.CreateRange([request.Name], data);
+            return units.First().Guid;
         }
         else
         {
-            await uow.MeasureUnit.FillByGuids([request.Guid]);
-            var measureUnit = uow.MeasureUnit.List.FirstOrDefault(x => x.Guid == request.Guid);
-
-            MeasureUnit.UpdateRange([new MeasureUnit.UpdateArg(measureUnit) with {
-                Name = request.Name,
-            }], uow);
-
-            return measureUnit.Guid;
+            await MeasureUnit.UpdateRange([new MeasureUnit.UpdateArg(request.Guid, request.Name)], data);
+            return request.Guid;
         }
     }
 }

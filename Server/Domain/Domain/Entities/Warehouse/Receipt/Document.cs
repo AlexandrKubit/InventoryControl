@@ -1,7 +1,8 @@
 ﻿namespace Domain.Entities.Warehouse.Receipt;
 
-using Domain.Base;
 using Common.Exceptions;
+using Domain.Base;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Документ поступления ресурсов (накладная)
@@ -12,6 +13,8 @@ public sealed class Document : BaseEntity
     {
         protected static Document Restore(Guid id, string name, DateTime date)
             => new Document(id, name, date);
+
+        public Task FillByNumbers(List<string> numbers);
     }
 
 
@@ -30,9 +33,10 @@ public sealed class Document : BaseEntity
     // тогда как сценарий (команда) создания накладной будет выгядеть как последовательность вызовов бизнес действий:
     // создать накладную, добавть в нее элементы
     public record CreateArg(string Number, DateTime Date);
-    public static List<Document> CreateRange(List<CreateArg> args, IData data)
+    public static async Task<List<Document>> CreateRange(List<CreateArg> args, IData data)
     {
         var numbers = args.Select(x => x.Number).ToList();
+        await data.Receipt.FillByNumbers(numbers);
 
         if (data.Receipt.List.Any(x => numbers.Contains(x.Number)))
             throw new DomainException("В системе уже зарегистрирована накладная с таким номером");
@@ -49,23 +53,29 @@ public sealed class Document : BaseEntity
         return documents;
     }
 
-    public record UpdateArg(Document Document)
+    public record UpdateArg(Guid Guid, string Number, DateTime Date);
+    public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        public string Number = Document.Number;
-        public DateTime Date = Document.Date;
-    };
-    public static void UpdateRange(List<UpdateArg> args, IData data)
-    {
-        foreach (var arg in args)
+        var guids = args.Select(x => x.Guid).Distinct().ToList();
+        await data.Receipt.FillByGuids(guids);
+
+        var numbers = args.Select(x => x.Number).Distinct().ToList();
+        await data.Receipt.FillByNumbers(numbers);
+
+        var receipts = data.Receipt.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var receipt in receipts)
         {
-            arg.Document.Number = arg.Number;
-            arg.Document.Date = arg.Date;
-            arg.Document.Update();
+            var arg = args.First(x => x.Guid == receipt.Guid);
+
+            receipt.Number = arg.Number;
+            receipt.Date = arg.Date;
+            receipt.Update();
         }
 
         foreach (var arg in args)
         {
-            if (data.Receipt.List.Any(x => x.Number == arg.Number && x.Guid != arg.Document.Guid))
+            if (data.Receipt.List.Any(x => x.Number == arg.Number && x.Guid != arg.Guid))
                 throw new DomainException("В системе уже зарегистрирована накладная с таким номером");
         }
     }
@@ -74,13 +84,19 @@ public sealed class Document : BaseEntity
     // иначе данные будут в невалидном состоянии
     // на этом примере можно увидеть разницу между бизнес действием и сценарием
     // при том, что удаление ресурса из накладной тоже отдельное бизнесс действие
-    public static void DeleteRange(List<Document> receipts, IData data)
+    public static async Task DeleteRange(List<Guid> receiptGuids, IData data)
     {
-        var receiptGuids = receipts.Select(x => x.Guid).ToList();
-        
-        var items = data.ReceiptItem.List.Where(x => receiptGuids.Contains(x.ReceiptGuid)).ToList();
-        Item.DeleteRange(items, data);
+        await data.Receipt.FillByGuids(receiptGuids);
+        await data.ReceiptItem.FillByReceiptGuids(receiptGuids);
 
+        var itemGuids = data.ReceiptItem.List
+            .Where(x => receiptGuids.Contains(x.ReceiptGuid))
+            .Select(x=> x.Guid)
+            .ToList();
+
+        await Item.DeleteRange(itemGuids, data);
+
+        var receipts = data.Receipt.List.Where(x => receiptGuids.Contains(x.Guid)).ToList();
         foreach (var receipt in receipts)
         {
             receipt.Remove();

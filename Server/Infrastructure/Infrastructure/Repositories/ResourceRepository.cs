@@ -6,7 +6,7 @@ using Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System;
 
-internal class ResourceRepository : BaseRepository<Resource>, App.Commands.Repositories.IResourceRepository
+internal class ResourceRepository : BaseRepository<Resource>, Resource.IRepository
 {
     public ResourceRepository(Context context)
     {

@@ -1,7 +1,7 @@
 ﻿namespace App.Commands.Handlers.Warehouse.Receipt.Save;
 
 using App.Base.Mediator;
-using App.Commands.Base;
+using Domain.Base;
 using Domain.Entities.Warehouse.Receipt;
 using Exchange.Commands.Warehouse.Receipt.Save;
 using System.Threading.Tasks;
@@ -11,71 +11,40 @@ public class Handler : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
     {
-        var uow = (IUnitOfWork)provider.GetService(typeof(IUnitOfWork));
-
-        await uow.Receipt.FillByNumbers([request.Number]);
+        var data = (IData)provider.GetService(typeof(IData));
 
         if (request.Guid == Guid.Empty)
         {
-            var receipt = Document.CreateRange([new Document.CreateArg(request.Number, request.Date.Date)], uow).First();
+            var receipt = (await Document.CreateRange([new Document.CreateArg(request.Number, request.Date.Date)], data)).First();
             var itemArgs = request.Items
                 .Select(x => new Item.CreateArg(receipt.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
                 .ToList();
 
-            var args = request.Items.Select(x => (x.ResourceGuid, x.MeasureUnitGuid));
-            await uow.Balance.FillByResourceMeasureUnit(args);
-
-            Item.CreateRange(itemArgs, uow);
+            await Item.CreateRange(itemArgs, data);
             return receipt.Guid;
         }
         else
         {
-            await uow.Receipt.FillByGuids([request.Guid]);
-            var receipt = uow.Receipt.List.FirstOrDefault(x => x.Guid == request.Guid);
+            await Document.UpdateRange([new Document.UpdateArg(request.Guid, request.Number, request.Date)], data);
 
-            Document.UpdateRange([new Document.UpdateArg(receipt) with {
-                Number = request.Number,
-                Date = request.Date.Date
-            }], uow);
-
-            await uow.ReceiptItem.FillByReceiptGuids([receipt.Guid]);
-            var items = uow.ReceiptItem.List.Where(x => x.ReceiptGuid == receipt.Guid).ToList();
-
-            // items
-            var deletedItemsGuids = items.Select(x => x.Guid).Except(request.Items.Select(x => x.Guid)).ToList();
-            var deletedItems = items.Where(x => deletedItemsGuids.Contains(x.Guid)).ToList();
-            var createdItems = request.Items.Where(x => x.Guid == Guid.Empty).ToList();
-            var updatedItems = request.Items.Where(x => x.Guid != Guid.Empty).ToList();
-
-            var args = deletedItems.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToList();
-            args.AddRange(createdItems.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)));
-            args.AddRange(updatedItems.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)));
-            args.AddRange(items.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)));
-            args = args.Distinct().ToList();
-            await uow.Balance.FillByResourceMeasureUnit(args);
+            await data.ReceiptItem.FillByReceiptGuids([request.Guid]);
+            var items = data.ReceiptItem.List.Where(x => x.ReceiptGuid == request.Guid).ToList();
 
             // delete
-            Item.DeleteRange(deletedItems, uow);
+            var deletedItemsGuids = items.Select(x => x.Guid).Except(request.Items.Select(x => x.Guid)).ToList();
+            await Item.DeleteRange(deletedItemsGuids.ToList(), data);
 
             // create
-            var createArgs = createdItems
-                .Select(x => new Item.CreateArg(receipt.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-                .ToList();
-
-            Item.CreateRange(createArgs, uow);
+            var createdItems = request.Items.Where(x => x.Guid == Guid.Empty).ToList();
+            var createArgs = createdItems.Select(x => new Item.CreateArg(request.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity)).ToList();
+            await Item.CreateRange(createArgs, data);
 
             // update
-            var updateArgs = updatedItems
-                .Select(x => new Item.UpdateArg(items.First(y => y.Guid == x.Guid)) with
-                {
-                    ResourceGuid = x.ResourceGuid,
-                    MeasureUnitGuid = x.MeasureUnitGuid,
-                    Quantity = x.Quantity
-                }).ToList();
+            var updatedItems = request.Items.Where(x => x.Guid != Guid.Empty).ToList();
+            var updateArgs = updatedItems.Select(x => new Item.UpdateArg(x.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity)).ToList();
+            await Item.UpdateRange(updateArgs, data);
 
-            Item.UpdateRange(updateArgs, uow);
-
-            return receipt.Guid;
+            return request.Guid;
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿namespace App.Commands.Handlers.Warehouse.Shipment.ChangeCondition;
 
 using App.Base.Mediator;
-using App.Commands.Base;
+using Domain.Base;
 using Domain.Entities.Warehouse.Shipment;
 using Exchange.Commands.Warehouse.Shipment.ChangeCondition;
 using System.Threading.Tasks;
@@ -11,22 +11,18 @@ public class Handler : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
     {
-        var uow = (IUnitOfWork)provider.GetService(typeof(IUnitOfWork));
-        await uow.Shipment.FillByGuids([request.Guid]);
-        await uow.ShipmentItem.FillByShipmentGuids([request.Guid]);
+        var data = (IData)provider.GetService(typeof(IData));
+        await data.Shipment.FillByGuids([request.Guid]);
 
-        var args = uow.ShipmentItem.List.Where(x => x.ShipmentGuid == request.Guid).Select(x => (x.ResourceGuid, x.MeasureUnitGuid));
-        await uow.Balance.FillByResourceMeasureUnit(args);
-
-        var shipment = uow.Shipment.List.FirstOrDefault(x => x.Guid == request.Guid);
+        var shipment = data.Shipment.List.FirstOrDefault(x => x.Guid == request.Guid);
 
         if (shipment.Condition == Document.Conditions.Unsigned)
         {
-            Document.SignRange([shipment], uow);
+            await Document.SignRange([shipment.Guid], data);
         }
         else
         {
-            Document.UnsignRange([shipment], uow);
+            await Document.UnsignRange([shipment.Guid], data);
         }
         return shipment.Guid;
     }

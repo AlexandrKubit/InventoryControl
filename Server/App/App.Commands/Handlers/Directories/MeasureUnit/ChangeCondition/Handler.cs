@@ -1,7 +1,7 @@
 ﻿namespace App.Commands.Handlers.Directories.MeasureUnit.ChangeCondition;
 
 using App.Base.Mediator;
-using App.Commands.Base;
+using Domain.Base;
 using Domain.Entities.Directories;
 using Exchange.Commands.Directories.MeasureUnit.ChangeCondition;
 using System.Threading.Tasks;
@@ -11,17 +11,16 @@ public class Handler : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
     {
-        var uow = (IUnitOfWork)provider.GetService(typeof(IUnitOfWork));
+        var data = (IData)provider.GetService(typeof(IData));
+        await data.MeasureUnit.FillByGuids([request.Guid]);
+        var unit = data.MeasureUnit.List.FirstOrDefault(x => x.Guid == request.Guid);
 
-        await uow.MeasureUnit.FillByGuids([request.Guid]);
-        var measureUnit = uow.MeasureUnit.List.FirstOrDefault(x => x.Guid == request.Guid);
-
-        if (measureUnit.Condition == MeasureUnit.Conditions.Work)
-            measureUnit.ToArchive();
+        if (unit.Condition == MeasureUnit.Conditions.Work)
+            await MeasureUnit.ToArchiveRange([request.Guid], data);
         else
-            measureUnit.ToWork();
+            await MeasureUnit.ToWorkRange([request.Guid], data);
 
-        return measureUnit.Guid;
+        return unit.Guid;
     }
 }
 

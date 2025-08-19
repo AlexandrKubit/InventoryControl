@@ -1,7 +1,9 @@
 ﻿namespace Domain.Entities.Directories;
 
-using Domain.Base;
 using Common.Exceptions;
+using Domain.Base;
+using System;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Ресурс
@@ -12,6 +14,8 @@ public sealed class Resource : BaseEntity
     {
         protected static Resource Restore(Guid guid, string name, Conditions condition)
             => new Resource(guid, name, condition);
+
+        public Task FillByNames(List<string> names);
     }
 
     public string Name { get; private set; }
@@ -30,8 +34,10 @@ public sealed class Resource : BaseEntity
         Condition = condition;
     }
 
-    public static List<Resource> CreateRange(List<string> names, IData data)
+    public static async Task<List<Resource>> CreateRange(List<string> names, IData data)
     {
+        await data.Resource.FillByNames(names);
+
         if (data.Resource.List.Any(x => names.Contains(x.Name)))
             throw new DomainException("В системе уже зарегистрирован ресурс с таким наименованием");
 
@@ -47,59 +53,83 @@ public sealed class Resource : BaseEntity
         return resources;
     }
 
-    public record UpdateArg(Resource Resource)
+    public record UpdateArg(Guid Guid, string Name);
+    public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        public string Name = Resource.Name;
-    };
-    public static void UpdateRange(List<UpdateArg> args, IData data)
-    {
-        foreach (var arg in args)
+        var guids = args.Select(x => x.Guid).Distinct().ToList();
+        await data.Resource.FillByGuids(guids);
+
+        var names = args.Select(x => x.Name).Distinct().ToList();
+        await data.Resource.FillByNames(names);
+
+        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var resource in resources)
         {
-            arg.Resource.Name = arg.Name;
-            arg.Resource.Update();
+            var arg = args.First(x => x.Guid == resource.Guid);
+
+            resource.Name = arg.Name;
+            resource.Update();
         }
 
         foreach (var arg in args)
         {
-            if (data.Resource.List.Any(x => x.Name == arg.Name && x.Guid != arg.Resource.Guid))
+            if (data.Resource.List.Any(x => x.Name == arg.Name && x.Guid != arg.Guid))
                 throw new DomainException("В системе уже зарегистрирован ресурс с таким наименованием");
         }
     }
 
-    public static void DeleteRange(List<Resource> resources, IData data)
+    public static async Task DeleteRange(List<Guid> guids, IData data)
     {
-        var resourceGuids = resources.Select(x => x.Guid).ToList();
+        await data.ReceiptItem.FillByResourceGuids(guids);
+        await data.Balance.FillByResourceGuids(guids);
+        await data.ShipmentItem.FillByResourceGuids(guids);
 
-        var receiptItems = data.ReceiptItem.List.Where(x => resourceGuids.Contains(x.ResourceGuid));
-        var balances = data.Balance.List.Where(x => resourceGuids.Contains(x.ResourceGuid));
-        var shipmentItems = data.ShipmentItem.List.Where(x => resourceGuids.Contains(x.ResourceGuid));
+        var receiptItems = data.ReceiptItem.List.Where(x => guids.Contains(x.ResourceGuid));
+        var balances = data.Balance.List.Where(x => guids.Contains(x.ResourceGuid));
+        var shipmentItems = data.ShipmentItem.List.Where(x => guids.Contains(x.ResourceGuid));
 
         if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
             throw new DomainException("Невозможно удалить ресурс, так как он используется");
+
+        await data.Resource.FillByGuids(guids);
+        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)
             resource.Remove();
     }
 
-    public void ToArchive()
+    public static async Task ToArchiveRange(List<Guid> guids, IData data)
     {
-        if (Condition == Conditions.Work)
+        await data.Resource.FillByGuids(guids);
+        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var resource in resources)
         {
-            Condition = Conditions.Archive;
-            Update();
+            if (resource.Condition == Conditions.Work)
+            {
+                resource.Condition = Conditions.Archive;
+                resource.Update();
+            }
+            else
+                throw new DomainException("Невозможно перевести в архив, т.к. ресурс уже находится в архиве");
         }
-        else
-            throw new DomainException("Невозможно перевести в архив, т.к. ресурс уже находится в архиве");
     }
 
-    public void ToWork()
+    public static async Task ToWorkRange(List<Guid> guids, IData data)
     {
-        if (Condition == Conditions.Archive)
+        await data.Resource.FillByGuids(guids);
+        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var resource in resources)
         {
-            Condition = Conditions.Work;
-            Update();
+            if (resource.Condition == Conditions.Archive)
+            {
+                resource.Condition = Conditions.Work;
+                resource.Update();
+            }
+            else
+                throw new DomainException("Невозможно перевести в работу, т.к. ресурс уже находится в работе");
         }
-        else
-            throw new DomainException("Невозможно перевести в работу, т.к. ресурс уже находится в работе");
     }
 }

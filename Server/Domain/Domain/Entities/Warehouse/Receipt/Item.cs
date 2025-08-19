@@ -2,7 +2,9 @@
 
 using Domain.Base;
 using Domain.Entities.Warehouse;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Ресурс накладной
@@ -13,6 +15,10 @@ public sealed class Item : BaseEntity
     {
         protected static Item Restore(Guid guid, Guid receiptGuid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity)
             => new Item(guid, receiptGuid, resourceGuid, measureUnitGuid, quantity);
+
+        public abstract Task FillByMeasureUnitGuids(List<Guid> unitGuids);
+        public abstract Task FillByResourceGuids(List<Guid> resourceGuids);
+        public abstract Task FillByReceiptGuids(List<Guid> receiptGuids);
     }
 
 
@@ -20,12 +26,10 @@ public sealed class Item : BaseEntity
     // ресурсы на складе просто так нельзя удалять, добавлять или изменять на складе
     // поэтому эти методы приватны и мы передаем их тем сущностям, которые имеют право изменять кол-во ресурсов на складе
     #region delegates
-    private static Action<List<Balance.AddRangeToStockArg>, IData> addRangeToStock;
-    private static Action<List<Balance.RemoveRangeFromStockArg>, IData> removeRangeFromStock;
-    public static void SetAddRangeToStock(Action<List<Balance.AddRangeToStockArg>, IData> action) 
-        => addRangeToStock ??= action;
-    public static void SetRemoveRangeFromStock(Action<List<Balance.RemoveRangeFromStockArg>, IData> action) 
-        => removeRangeFromStock ??= action;
+    private static Func<List<Balance.AddRangeToStockArg>, IData, Task> addRangeToStock;
+    private static Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> removeRangeFromStock;
+    public static void SetAddRangeToStock(Func<List<Balance.AddRangeToStockArg>, IData, Task> func) => addRangeToStock ??= func;
+    public static void SetRemoveRangeFromStock(Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> func) => removeRangeFromStock ??= func;
     #endregion
 
     public Guid ReceiptGuid { get; }
@@ -43,7 +47,7 @@ public sealed class Item : BaseEntity
     }
 
     public record CreateArg(Guid ReceiptGuid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
-    public static List<Item> CreateRange(List<CreateArg> args, IData data)
+    public static async Task<List<Item>> CreateRange(List<CreateArg> args, IData data)
     {
         List<Item> items = new List<Item>();
 
@@ -58,59 +62,53 @@ public sealed class Item : BaseEntity
             .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
             .ToList();
 
-        addRangeToStock.Invoke(addRangeToStockArgs, data);
+        await addRangeToStock(addRangeToStockArgs, data);
         return items;
     }
 
-    public record UpdateArg(Item Item)
+    public record UpdateArg(Guid Guid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
+    public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        public Guid ResourceGuid = Item.ResourceGuid;
-        public Guid MeasureUnitGuid = Item.MeasureUnitGuid;
-        public decimal Quantity = Item.Quantity;
-    };
-    public static void UpdateRange(List<UpdateArg> args, IData data)
-    {
-        List<Balance.RemoveRangeFromStockArg> removeRangeFromStockArgs = args
-            .Where(x => x.Quantity < x.Item.Quantity && x.Item.ResourceGuid == x.ResourceGuid && x.Item.MeasureUnitGuid == x.MeasureUnitGuid)
-            .Select(x => new Balance.RemoveRangeFromStockArg(x.Item.ResourceGuid, x.Item.MeasureUnitGuid, x.Item.Quantity - x.Quantity))
-            .ToList();
-        removeRangeFromStockArgs.AddRange(args
-            .Where(x => x.Item.ResourceGuid != x.ResourceGuid || x.Item.MeasureUnitGuid != x.MeasureUnitGuid)
-            .Select(x => new Balance.RemoveRangeFromStockArg(x.Item.ResourceGuid, x.Item.MeasureUnitGuid, x.Item.Quantity))
-            .ToList()
-        );
+        var guids = args.Select(x => x.Guid).Distinct().ToList();
+        await data.ReceiptItem.FillByGuids(guids);
+        var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
 
-        List<Balance.AddRangeToStockArg> addRangeToStockArgs = args
-            .Where(x => x.Quantity > x.Item.Quantity && x.Item.ResourceGuid == x.ResourceGuid && x.Item.MeasureUnitGuid == x.MeasureUnitGuid)
-            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity - x.Item.Quantity))
-            .ToList();
-        addRangeToStockArgs.AddRange(args
-            .Where(x => x.Item.ResourceGuid != x.ResourceGuid || x.Item.MeasureUnitGuid != x.MeasureUnitGuid)
-            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList()
-        );
-
-        foreach (var arg in args)
-        {
-            arg.Item.ResourceGuid = arg.ResourceGuid;
-            arg.Item.MeasureUnitGuid = arg.MeasureUnitGuid;
-            arg.Item.Quantity = arg.Quantity;
-            arg.Item.Update();
-        }
-
-        removeRangeFromStock.Invoke(removeRangeFromStockArgs, data);
-        addRangeToStock.Invoke(addRangeToStockArgs, data);
-    }
-
-    public static void DeleteRange(List<Item> args, IData data)
-    {
-        List<Balance.RemoveRangeFromStockArg> removeRangeFromStockArgs = args
+        var removeRangeFromStockArgs = items
             .Select(x => new Balance.RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
             .ToList();
 
-        removeRangeFromStock.Invoke(removeRangeFromStockArgs, data);
+        await removeRangeFromStock(removeRangeFromStockArgs, data);
 
-        foreach (var arg in args)
-            arg.Remove();
+        foreach (var item in items)
+        {
+            var arg = args.First(x => x.Guid == item.Guid);
+
+            item.ResourceGuid = arg.ResourceGuid;
+            item.MeasureUnitGuid = arg.MeasureUnitGuid;
+            item.Quantity = arg.Quantity;
+            item.Update();
+        }
+
+        var addRangeToStockArgs = items
+            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
+            .ToList();
+
+        await addRangeToStock(addRangeToStockArgs, data);
+    }
+
+
+    public static async Task DeleteRange(List<Guid> guids, IData data)
+    {
+        await data.ReceiptItem.FillByGuids(guids);
+        var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        var removeRangeFromStockArgs = items
+            .Select(x => new Balance.RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
+            .ToList();
+
+        await removeRangeFromStock(removeRangeFromStockArgs, data);
+
+        foreach (var item in items)
+            item.Remove();
     }
 }

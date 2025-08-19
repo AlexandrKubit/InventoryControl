@@ -3,6 +3,7 @@
 using Common.Exceptions;
 using Domain.Base;
 using Domain.Entities.Warehouse.Receipt;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Баланс (свободный остаток на склада)
@@ -13,6 +14,10 @@ public sealed class Balance : BaseEntity
     {
         protected static Balance Restore(Guid guid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity)
             => new Balance(guid, resourceGuid, measureUnitGuid, quantity);
+
+        public Task FillByResourceMeasureUnit(IEnumerable<(Guid ResourceGuid, Guid MeasureUnitGuid)> args);
+        public Task FillByMeasureUnitGuids(List<Guid> unitGuids);
+        public Task FillByResourceGuids(List<Guid> resourceGuids);
     }
 
 
@@ -40,8 +45,11 @@ public sealed class Balance : BaseEntity
     }
 
     public record AddRangeToStockArg(Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
-    private static void AddRangeToStock(List<AddRangeToStockArg> args, IData data)
-    {   
+    private static async Task AddRangeToStock(List<AddRangeToStockArg> args, IData data)
+    {
+        var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToList();
+        await data.Balance.FillByResourceMeasureUnit(resourceMeasureUnits);
+
         foreach (var arg in args)
         {
             var balance = data.Balance.List.FirstOrDefault(x => x.MeasureUnitGuid == arg.MeasureUnitGuid && x.ResourceGuid == arg.ResourceGuid);
@@ -59,8 +67,11 @@ public sealed class Balance : BaseEntity
     }
 
     public record RemoveRangeFromStockArg(Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
-    private static void RemoveRangeFromStock(List<RemoveRangeFromStockArg> args, IData data)
+    private static async Task RemoveRangeFromStock(List<RemoveRangeFromStockArg> args, IData data)
     {
+        var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToList();
+        await data.Balance.FillByResourceMeasureUnit(resourceMeasureUnits);
+
         foreach (var arg in args)
         {
             var balance = data.Balance.List.FirstOrDefault(x => x.MeasureUnitGuid == arg.MeasureUnitGuid && x.ResourceGuid == arg.ResourceGuid);

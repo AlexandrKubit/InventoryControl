@@ -1,7 +1,8 @@
 ﻿namespace Domain.Entities.Warehouse.Shipment;
 
-using Domain.Base;
 using Common.Exceptions;
+using Domain.Base;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Документ отгрузки
@@ -12,19 +13,20 @@ public sealed class Document : BaseEntity
     {
         protected static Document Restore(Guid guid, string number, Guid clientGuid, DateTime date, Conditions condition)
             => new Document(guid, number, clientGuid, date, condition);
+
+        public abstract Task FillByNumbers(List<string> numbers);
+        public abstract Task FillByClients(List<Guid> clientGuids);
     }
 
     // при подписи и отзыве отгрузки необходимо изменять кол-во ресурсов на складе
     // ресурсы на складе просто так нельзя удалять, добавлять или изменять на складе
     // поэтому эти методы приватны и мы передаем их тем сущностям, которые имеют право изменять кол-во ресурсов на складе
     #region delegates
-    private static Action<List<Balance.AddRangeToStockArg>, IData> addRangeToStock;
-    private static Action<List<Balance.RemoveRangeFromStockArg>, IData> removeRangeFromStock;
+    private static Func<List<Balance.AddRangeToStockArg>, IData, Task> addRangeToStock;
+    private static Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> removeRangeFromStock;
 
-    public static void SetAddRangeToStock(Action<List<Balance.AddRangeToStockArg>, IData> action) 
-        => addRangeToStock ??= action;
-    public static void SetRemoveRangeFromStock(Action<List<Balance.RemoveRangeFromStockArg>, IData> action) 
-        => removeRangeFromStock ??= action;
+    public static void SetAddRangeToStock(Func<List<Balance.AddRangeToStockArg>, IData, Task> func) => addRangeToStock ??= func;
+    public static void SetRemoveRangeFromStock(Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> func) => removeRangeFromStock ??= func;
     #endregion
 
     public enum Conditions
@@ -50,13 +52,14 @@ public sealed class Document : BaseEntity
     // предположим, что в нашем домене нельзя создать пустой документ отгрузки
     // в этом случае нам необходимо в это бизнес действие передать информацию о ресурсах, которые мы отгружаем
     public record CreateArg(string Number, Guid ClientGuid, DateTime Date, List<Item.CreateArg> CreateItems);
-    public static List<Document> CreateRange(List<CreateArg> args, IData data)
+    public static async Task<List<Document>> CreateRange(List<CreateArg> args, IData data)
     {
         if (args.Any(x => x.CreateItems.Count == 0))
             throw new DomainException("Невозможно создать пустую отгрузку");
 
         var numbers = args.Select(x => x.Number).ToList();
-        
+        await data.Shipment.FillByNumbers(numbers);
+
         if (data.Shipment.List.Any(x => numbers.Contains(x.Number)))
             throw new DomainException("В системе уже зарегистрирована отгрузка с таким номером");
 
@@ -71,92 +74,106 @@ public sealed class Document : BaseEntity
             createItems.AddRange(arg.CreateItems.Select(x => new Item.CreateArg(document.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity)));
         }
 
-        Item.CreateRange(createItems, data);
+        await Item.CreateRange(createItems, data);
 
         return documents;
     }
 
-    public record UpdateArg(Document Document)
+    public record UpdateArg(Guid Guid, string Number, Guid ClientGuid, DateTime Date);
+    public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        public string Number = Document.Number;
-        public Guid ClientGuid = Document.ClientGuid;
-        public DateTime Date = Document.Date;
-    };
-    public static void UpdateRange(List<UpdateArg> args, IData data)
-    {
-        if (args.Any(x => x.Document.Condition == Conditions.Signed))
+        var guids = args.Select(x => x.Guid).Distinct().ToList();
+        await data.Shipment.FillByGuids(guids);
+        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        if (documents.Any(x => x.Condition == Conditions.Signed))
             throw new DomainException("Невозможно отредактировать подписанную отгрузку");
 
-        foreach (var arg in args)
+        var numbers = args.Select(x => x.Number).Distinct().ToList();
+        await data.Shipment.FillByNumbers(numbers);
+
+        foreach (var document in documents)
         {
-            arg.Document.Number = arg.Number;
-            arg.Document.Date = arg.Date;
-            arg.Document.ClientGuid = arg.ClientGuid;
-            arg.Document.Update();
+            var arg = args.FirstOrDefault(x => x.Guid == document.Guid);
+
+            document.Number = arg.Number;
+            document.Date = arg.Date;
+            document.ClientGuid = arg.ClientGuid;
+            document.Update();
         }
 
         foreach (var arg in args)
         {
-            if (data.Shipment.List.Any(x => x.Number == arg.Number && x.Guid != arg.Document.Guid))
+            if (data.Shipment.List.Any(x => x.Number == arg.Number && x.Guid != arg.Guid))
                 throw new DomainException("В системе уже зарегистрирована отгрузка с таким номером");
         }
     }
 
-    public static void DeleteRange(List<Document> shipments, IData data)
+    public static async Task DeleteRange(List<Guid> guids, IData data)
     {
-        if (shipments.Any(x => x.Condition == Conditions.Signed))
+        await data.Shipment.FillByGuids(guids);
+        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        if (documents.Any(x => x.Condition == Conditions.Signed))
             throw new DomainException("Невозможно удалить подписанную отгрузку");
 
-        var shipmentGuids = shipments.Select(x => x.Guid).ToList();       
-        var items = data.ShipmentItem.List.Where(x => shipmentGuids.Contains(x.ShipmentGuid)).ToList();
-        Item.DeleteRange(items, data);
+        await data.ShipmentItem.FillByShipmentGuids(guids);
 
-        foreach (var shipment in shipments)
+        var itemGuids = data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).Select(x => x.Guid).ToList();
+        await Item.DeleteRange(itemGuids, data);
+
+        foreach (var document in documents)
         {
-            shipment.Remove();
+            document.Remove();
         }
     }
 
-    public static void SignRange(List<Document> shipments, IData data)
+    public static async Task SignRange(List<Guid> guids, IData data)
     {
-        foreach (var shipment in shipments)
+        await data.Shipment.FillByGuids(guids);
+        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var document in documents)
         {
-            if (shipment.Condition == Conditions.Signed)
+            if (document.Condition == Conditions.Signed)
                 throw new DomainException("Невозможно подписать отгрузку, т.к. она уже подписана");
 
-            shipment.Condition = Conditions.Signed;
-            shipment.Update();
+            document.Condition = Conditions.Signed;
+            document.Update();
         }
 
-        var shipmentGuids = shipments.Select(x => x.Guid).ToList();      
-        var items = data.ShipmentItem.List.Where(x => shipmentGuids.Contains(x.ShipmentGuid)).ToList();
+        await data.ShipmentItem.FillByShipmentGuids(guids);
+        var items = data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
-        List<Balance.RemoveRangeFromStockArg> removeRangeFromStockArgs = items
+        var removeRangeFromStockArgs = items
             .Select(x => new Balance.RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
             .ToList();
 
-        removeRangeFromStock.Invoke(removeRangeFromStockArgs, data);
+        await removeRangeFromStock(removeRangeFromStockArgs, data);
     }
 
-    public static void UnsignRange(List<Document> shipments, IData data)
+
+    public static async Task UnsignRange(List<Guid> guids, IData data)
     {
-        foreach (var shipment in shipments)
+        await data.Shipment.FillByGuids(guids);
+        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+
+        foreach (var document in documents)
         {
-            if (shipment.Condition == Conditions.Unsigned)
+            if (document.Condition == Conditions.Unsigned)
                 throw new DomainException("Невозможно отозвать отгрузку, т.к. она не подписана");
 
-            shipment.Condition = Conditions.Unsigned;
-            shipment.Update();
+            document.Condition = Conditions.Unsigned;
+            document.Update();
         }
 
-        var shipmentGuids = shipments.Select(x => x.Guid).ToList();
-        //await Data.Uow.ShipmentItem.FillByShipmentGuids(shipmentGuids);
-        var items = data.ShipmentItem.List.Where(x => shipmentGuids.Contains(x.ShipmentGuid)).ToList();
+        await data.ShipmentItem.FillByShipmentGuids(guids);
+        var items = data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
-        List<Balance.AddRangeToStockArg> addRangeToStockArgs = items
+        var addRangeToStockArgs = items
             .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
             .ToList();
 
-        addRangeToStock.Invoke(addRangeToStockArgs, data);
+        await addRangeToStock(addRangeToStockArgs, data);
     }
 }

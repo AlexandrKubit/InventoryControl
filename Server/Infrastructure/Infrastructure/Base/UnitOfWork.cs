@@ -1,7 +1,6 @@
 ﻿namespace Infrastructure.Base;
 
-using App.Commands.Base;
-using App.Commands.Repositories;
+using App.Base.Mediator;
 using Domain.Base;
 using Domain.Entities.Directories;
 using Domain.Entities.Warehouse;
@@ -11,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Reflection;
 
-public sealed class UnitOfWork : IUnitOfWork
+public sealed class UnitOfWork : IData, IUnitOFWorkBase
 {
     public UnitOfWork(IServiceProvider provider)
     {
@@ -56,27 +55,12 @@ public sealed class UnitOfWork : IUnitOfWork
     }
 
 
-    IClientRepository IUnitOfWork.Client => Get<ClientRepository>();
     Client.IRepository IData.Client => Get<ClientRepository>();
-
-    public IMeasureUnitRepository MeasureUnit => Get<MeasureUnitRepository>();
     MeasureUnit.IRepository IData.MeasureUnit => Get<MeasureUnitRepository>();
-
-    public IResourceRepository Resource => Get<ResourceRepository>();
     Resource.IRepository IData.Resource => Get<ResourceRepository>();
-
-    public IBalanceRepository Balance => Get<BalanceRepository>();
     Balance.IRepository IData.Balance => Get<BalanceRepository>();
-
-    public IReceiptRepository Receipt => Get<ReceiptRepository>();
     Domain.Entities.Warehouse.Receipt.Document.IRepository IData.Receipt => Get<ReceiptRepository>();
-
-    public IReceiptItemRepository ReceiptItem => Get<ReceiptItemRepository>();
     Domain.Entities.Warehouse.Receipt.Item.IRepository IData.ReceiptItem => Get<ReceiptItemRepository>();
-
-    public IShipmentRepository Shipment => Get<ShipmentRepository>();
     Domain.Entities.Warehouse.Shipment.Document.IRepository IData.Shipment => Get<ShipmentRepository>();
-
-    public IShipmentItemRepository ShipmentItem => Get<ShipmentItemRepository>();
     Domain.Entities.Warehouse.Shipment.Item.IRepository IData.ShipmentItem => Get<ShipmentItemRepository>();
 }

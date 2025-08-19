@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
 {
     public static void AddMediator(this IServiceCollection services)
     {
-        Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(IUnitOfWork)));
+        Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(ForDI)));
         Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(App.Queries.Base.Connection)));
     }
 
@@ -19,7 +19,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<UnitOfWork>();
         services.AddScoped<IData>(sp => sp.GetService<UnitOfWork>());
-        services.AddScoped<IUnitOfWork>(sp => sp.GetService<UnitOfWork>());
         services.AddScoped<IUnitOFWorkBase>(sp => sp.GetService<UnitOfWork>());
         services.AddScoped<Context>();
     }
