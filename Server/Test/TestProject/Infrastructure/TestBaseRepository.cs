@@ -12,4 +12,6 @@ public abstract class TestBaseRepository<TEntity> where TEntity : BaseEntity
             list.Add(entity);
         }
     }
+
+    public abstract void InitData();
 }
