@@ -1,5 +1,6 @@
 ﻿namespace Infrastructure.Services.Repositories;
 
+using Domain.Base;
 using Domain.Entities.Directories;
 using Infrastructure.Base;
 using Infrastructure.Helpers;
@@ -7,26 +8,45 @@ using Microsoft.EntityFrameworkCore;
 
 internal class ClientRepository : BaseRepository<Client>, Client.IRepository
 {
+    private Context context { get; set; }
+
+    public IReadOnlyDictionary<string, Guid> Names => namesDictionary;
+    Dictionary<string, Guid> namesDictionary = [];
+
     public ClientRepository(Context context)
     {
-        Context = context;
+        this.context = context;
     }
-
-    private Context Context { get; set; }
 
 
     public async Task FillByNames(List<string> names)
     {
         var func = async (IEnumerable<string> args) =>
-            await Context.Clients.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
+            await context.Clients.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
 
         await LoadWithCacheAsync(names, func, this);
+    }
+
+    public async Task FillNamesByNames(List<string> names)
+    {
+        var namesToLoad = names.Except(namesDictionary.Select(x=> x.Key)).ToList();
+        if (!namesToLoad.Any()) return;
+
+        var namesFromDb = await context.Clients
+            .Where(c => namesToLoad.Contains(c.Name))
+            .Select(c => new { c.Name, c.Guid })
+            .ToListAsync();
+
+        foreach (var name in namesFromDb)
+        {
+            namesDictionary[name.Name] = name.Guid;
+        }
     }
 
     protected override async Task Commit()
     {
         await EntityCommitHelper.CommitEntities(
-            dbSet: Context.Clients,
+            dbSet: context.Clients,
             entities: list,
             createMapDelegate: entity => new Entities.Client
             {
@@ -42,14 +62,24 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
                 dbEntity.Condition = entity.Condition;
             }
         );
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Client>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await Context.Clients
+        return await context.Clients
             .Where(x => guids.Contains(x.Guid))
             .Select(x => Client.IRepository.Restore(x.Guid, x.Name, x.Address, x.Condition))
             .ToListAsync();
+    }
+
+    public override void SyncIndexes(Client client)
+    {
+        namesDictionary.Remove(namesDictionary.First(x=> x.Value == client.Guid).Key);
+
+        if (client.ModificationType != BaseEntity.ModificationTypes.Removed)
+        {
+            namesDictionary[client.Name] = client.Guid;
+        }
     }
 }

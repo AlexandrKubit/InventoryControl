@@ -9,22 +9,22 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
 {
     public ShipmentRepository(Context context)
     {
-        Context = context;
+        this.context = context;
     }
 
-    private Context Context { get; set; }
+    private Context context { get; set; }
 
     public async Task FillByClients(List<Guid> clientGuids)
     {
         var func = async (IEnumerable<Guid> args) =>
-            await Context.Shipments.Where(x => args.Contains(x.ClientGuid)).Select(x => x.Guid).ToListAsync();
+            await context.Shipments.Where(x => args.Contains(x.ClientGuid)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(clientGuids, func, this);
     }
 
     public async Task FillByNumbers(List<string> numbers)
     {
         var func = async (IEnumerable<string> args) =>
-            await Context.Shipments.Where(x => args.Contains(x.Number)).Select(x => x.Guid).ToListAsync();
+            await context.Shipments.Where(x => args.Contains(x.Number)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(numbers, func, this);
     }
 
@@ -32,7 +32,7 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
     protected override async Task Commit()
     {
         await EntityCommitHelper.CommitEntities(
-            dbSet: Context.Shipments,
+            dbSet: context.Shipments,
             entities: list,
             createMapDelegate: entity => new Entities.Shipment
             {
@@ -50,12 +50,12 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
                 dbEntity.Condition = entity.Condition;
             }
         );
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Document>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await Context.Shipments
+        return await context.Shipments
             .Where(x => guids.Contains(x.Guid))
             .Select(x => Document.IRepository.Restore(x.Guid, x.Number, x.ClientGuid, x.Date, x.Condition))
             .ToListAsync();            

@@ -9,23 +9,23 @@ internal class ShipmentItemRepository : BaseRepository<Item>, Item.IRepository
 {
     public ShipmentItemRepository(Context context)
     {
-        Context = context;
+        this.context = context;
     }
 
-    private Context Context { get; set; }
+    private Context context { get; set; }
 
     public async Task FillByMeasureUnitGuids(List<Guid> unitGuids)
     {
 
         var func = async (IEnumerable<Guid> args) =>
-            await Context.ShipmentItems.Where(x => args.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
+            await context.ShipmentItems.Where(x => args.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(unitGuids, func, this);
     }
 
     public async Task FillByShipmentGuids(List<Guid> shipmentGuids)
     {
         var func = async (IEnumerable<Guid> args) =>
-            await Context.ShipmentItems.Where(x => args.Contains(x.ShipmentGuid)).Select(x => x.Guid).ToListAsync();
+            await context.ShipmentItems.Where(x => args.Contains(x.ShipmentGuid)).Select(x => x.Guid).ToListAsync();
 
         await LoadWithCacheAsync(shipmentGuids, func, this);
     }
@@ -33,14 +33,14 @@ internal class ShipmentItemRepository : BaseRepository<Item>, Item.IRepository
     public async Task FillByResourceGuids(List<Guid> resourceGuids)
     {
         var func = async (IEnumerable<Guid> args) =>
-            await Context.ShipmentItems.Where(x => args.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
+            await context.ShipmentItems.Where(x => args.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(resourceGuids, func, this);
     }
 
     protected override async Task Commit()
     {
         await EntityCommitHelper.CommitEntities(
-            dbSet: Context.ShipmentItems,
+            dbSet: context.ShipmentItems,
             entities: list,
             createMapDelegate: entity => new Entities.ShipmentItem
             {
@@ -58,12 +58,12 @@ internal class ShipmentItemRepository : BaseRepository<Item>, Item.IRepository
                 dbEntity.Quantity = entity.Quantity;
             }
         );
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Item>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await Context.ShipmentItems
+        return await context.ShipmentItems
             .Where(x => guids.Contains(x.Guid))
             .Select(x => Item.IRepository.Restore(x.Guid, x.ShipmentGuid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
             .ToListAsync();            

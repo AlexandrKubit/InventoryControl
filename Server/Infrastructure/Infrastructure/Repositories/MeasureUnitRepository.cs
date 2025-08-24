@@ -9,23 +9,23 @@ internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.
 {
     public MeasureUnitRepository(Context context)
     {
-        Context = context;
+        this.context = context;
     }
 
-    private Context Context { get; set; }
+    private Context context { get; set; }
 
 
     public async Task FillByNames(List<string> names)
     {
         var func = async (IEnumerable<string> args) =>
-            await Context.MeasureUnits.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
+            await context.MeasureUnits.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(names, func, this);
     }
 
     protected override async Task Commit()
     {
         await EntityCommitHelper.CommitEntities(
-            dbSet: Context.MeasureUnits,
+            dbSet: context.MeasureUnits,
             entities: list,
             createMapDelegate: entity => new Entities.MeasureUnit
             {
@@ -39,12 +39,12 @@ internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.
                 dbEntity.Condition = entity.Condition;
             }
         );
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<MeasureUnit>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await Context.MeasureUnits
+        return await context.MeasureUnits
             .Where(x => guids.Contains(x.Guid))
             .Select(x => MeasureUnit.IRepository.Restore(x.Guid, x.Name, x.Condition))
             .ToListAsync();

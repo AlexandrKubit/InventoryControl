@@ -9,22 +9,22 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
 {
     public BalanceRepository(Context context)
     {
-        Context = context;
+        this.context = context;
     }
 
-    private Context Context { get; set; }
+    private Context context { get; set; }
 
     public async Task FillByMeasureUnitGuids(List<Guid> unitGuids)
     {
         var func = async (IEnumerable<Guid> guids) =>
-            await Context.Balances.Where(x => guids.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
+            await context.Balances.Where(x => guids.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(unitGuids, func, this);
     }
 
     public async Task FillByResourceGuids(List<Guid> resourceGuids)
     {
         var func = async (IEnumerable<Guid> guids) =>
-             await Context.Balances.Where(x => guids.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
+             await context.Balances.Where(x => guids.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(resourceGuids, func, this);
     }
 
@@ -33,7 +33,7 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
         var compositeKeys = args.Select(a => $"{a.ResourceGuid}:{a.MeasureUnitGuid}").ToList();
 
         var func = async (IEnumerable<string> args) =>
-            await Context.Balances
+            await context.Balances
             .Where(b => args.Contains(b.ResourceGuid.ToString() + ":" + b.MeasureUnitGuid.ToString()))
             .Select(b => b.Guid)
             .ToListAsync();
@@ -44,7 +44,7 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
     protected override async Task Commit()
     {
         await EntityCommitHelper.CommitEntities(
-            dbSet: Context.Balances,
+            dbSet: context.Balances,
             entities: list,
             createMapDelegate: entity => new Entities.Balance
             {
@@ -60,12 +60,12 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
                 dbEntity.Quantity = entity.Quantity;
             }
         );
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Balance>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await Context.Balances
+        return await context.Balances
             .Where(x => guids.Contains(x.Guid))
             .Select(x => Balance.IRepository.Restore(x.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
             .ToListAsync();

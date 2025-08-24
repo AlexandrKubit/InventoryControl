@@ -10,23 +10,23 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
 {
     public ResourceRepository(Context context)
     {
-        Context = context;
+        this.context = context;
     }
 
-    private Context Context { get; set; }
+    private Context context { get; set; }
 
 
     public async Task FillByNames(List<string> names)
     {
         var func = async (IEnumerable<string> args) =>
-            await Context.Resources.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
+            await context.Resources.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
         await LoadWithCacheAsync(names, func, this);
     }
 
     protected override async Task Commit()
     {
         await EntityCommitHelper.CommitEntities(
-            dbSet: Context.Resources,
+            dbSet: context.Resources,
             entities: list,
             createMapDelegate: entity => new Entities.Resource
             {
@@ -40,12 +40,12 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
                 dbEntity.Condition = entity.Condition;
             }
         );
-        await Context.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Resource>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await Context.Resources
+        return await context.Resources
             .Where(x => guids.Contains(x.Guid))
             .Select(x => Resource.IRepository.Restore(x.Guid, x.Name, x.Condition))
             .ToListAsync();
