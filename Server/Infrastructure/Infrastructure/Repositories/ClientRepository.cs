@@ -1,6 +1,5 @@
 ﻿namespace Infrastructure.Services.Repositories;
 
-using Domain.Base;
 using Domain.Entities.Directories;
 using Infrastructure.Base;
 using Infrastructure.Helpers;
@@ -10,14 +9,10 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
 {
     private Context context { get; set; }
 
-    public IReadOnlyDictionary<string, Guid> Names => namesDictionary;
-    Dictionary<string, Guid> namesDictionary = [];
-
     public ClientRepository(Context context)
     {
         this.context = context;
     }
-
 
     public async Task FillByNames(List<string> names)
     {
@@ -25,22 +20,6 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
             await context.Clients.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
 
         await LoadWithCacheAsync(names, func, this);
-    }
-
-    public async Task FillNamesByNames(List<string> names)
-    {
-        var namesToLoad = names.Except(namesDictionary.Select(x=> x.Key)).ToList();
-        if (!namesToLoad.Any()) return;
-
-        var namesFromDb = await context.Clients
-            .Where(c => namesToLoad.Contains(c.Name))
-            .Select(c => new { c.Name, c.Guid })
-            .ToListAsync();
-
-        foreach (var name in namesFromDb)
-        {
-            namesDictionary[name.Name] = name.Guid;
-        }
     }
 
     protected override async Task Commit()
@@ -71,15 +50,5 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
             .Where(x => guids.Contains(x.Guid))
             .Select(x => Client.IRepository.Restore(x.Guid, x.Name, x.Address, x.Condition))
             .ToListAsync();
-    }
-
-    public override void SyncIndexes(Client client)
-    {
-        namesDictionary.Remove(namesDictionary.First(x=> x.Value == client.Guid).Key);
-
-        if (client.ModificationType != BaseEntity.ModificationTypes.Removed)
-        {
-            namesDictionary[client.Name] = client.Guid;
-        }
     }
 }
