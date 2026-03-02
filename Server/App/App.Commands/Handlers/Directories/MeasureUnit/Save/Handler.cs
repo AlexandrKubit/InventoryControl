@@ -7,12 +7,10 @@ using Exchange.Commands.Directories.MeasureUnit.Save;
 using System.Threading.Tasks;
 
 [RequestRoute("/Directories/MeasureUnit/Save", RequestRouteAttribute.Types.Command)]
-public class Handler : IRequestHandler<Request, Guid>
+public class Handler(IData data) : IRequestHandler<Request, Guid>
 {
-    public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Guid> HandleAsync(Request request)
     {
-        var data = (IData)provider.GetService(typeof(IData));
-
         if (request.Guid == Guid.Empty)
         {
             var units = await MeasureUnit.CreateRange([request.Name], data);

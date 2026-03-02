@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 internal class ShipmentRepository : BaseRepository<Document>, Document.IRepository
 {
-    public ShipmentRepository(Context context)
+    public ShipmentRepository(UnitOfWork uow)
     {
-        this.context = context;
+        this.context = uow.Context;
     }
 
     private Context context { get; set; }
@@ -29,9 +29,9 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
     }
 
 
-    protected override async Task Commit()
+    public override void Commit()
     {
-        await EntityCommitHelper.CommitEntities(
+        EntityCommitHelper.CommitEntities(
             dbSet: context.Shipments,
             entities: list,
             createMapDelegate: entity => new Entities.Shipment
@@ -50,14 +50,14 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
                 dbEntity.Condition = entity.Condition;
             }
         );
-        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Document>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await context.Shipments
+        return (await context.Shipments
             .Where(x => guids.Contains(x.Guid))
+            .ToListAsync())      
             .Select(x => Document.IRepository.Restore(x.Guid, x.Number, x.ClientGuid, x.Date, x.Condition))
-            .ToListAsync();            
+            .ToList();
     }
 }

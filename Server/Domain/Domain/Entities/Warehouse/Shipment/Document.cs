@@ -20,13 +20,15 @@ public sealed class Document : BaseEntity
 
     // при подписи и отзыве отгрузки необходимо изменять кол-во ресурсов на складе
     // ресурсы на складе просто так нельзя удалять, добавлять или изменять на складе
-    // поэтому эти методы приватны и мы передаем их тем сущностям, которые имеют право изменять кол-во ресурсов на складе
-    #region delegates
-    private static Func<List<Balance.AddRangeToStockArg>, IData, Task> addRangeToStock;
-    private static Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> removeRangeFromStock;
+    // поэтому баланс подписывается на эти события
+    #region Events
+    public record SignedRangeArg(List<Document> Documents, IData Data);
+    public static Action<Func<SignedRangeArg, Task>> OnSignedRange => SignedRange.Subscribe;
+    private static readonly DomainEvent<SignedRangeArg> SignedRange = new(); // один подписчик - баланс на складе, порядок не важен  
 
-    public static void SetAddRangeToStock(Func<List<Balance.AddRangeToStockArg>, IData, Task> func) => addRangeToStock ??= func;
-    public static void SetRemoveRangeFromStock(Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> func) => removeRangeFromStock ??= func;
+    public record UnsignedRangeArg(List<Document> Documents, IData Data);
+    public static Action<Func<UnsignedRangeArg, Task>> OnUnsignedRange => UnsignedRange.Subscribe;
+    private static readonly DomainEvent<UnsignedRangeArg> UnsignedRange = new(); // один подписчик - баланс на складе, порядок не важен  
     #endregion
 
     public enum Conditions
@@ -145,11 +147,7 @@ public sealed class Document : BaseEntity
         await data.ShipmentItem.FillByShipmentGuids(guids);
         var items = data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
-        var removeRangeFromStockArgs = items
-            .Select(x => new Balance.RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
-
-        await removeRangeFromStock(removeRangeFromStockArgs, data);
+        await SignedRange.Invoke(new SignedRangeArg(documents, data));
     }
 
 
@@ -167,13 +165,6 @@ public sealed class Document : BaseEntity
             document.Update();
         }
 
-        await data.ShipmentItem.FillByShipmentGuids(guids);
-        var items = data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
-
-        var addRangeToStockArgs = items
-            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
-
-        await addRangeToStock(addRangeToStockArgs, data);
+        await UnsignedRange.Invoke(new UnsignedRangeArg(documents, data));
     }
 }

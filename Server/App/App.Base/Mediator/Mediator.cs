@@ -84,15 +84,21 @@ public static class Mediator
             throw new Exception($"Обработчик для запроса {requestType.Name} не зарегистрирован.");
 
         var handler = (IBaseRequestHandler)ActivatorUtilities.CreateInstance(context.RequestServices, handlerType);
-        var reult = await handler.BaseHandleAsync(request, context.RequestServices);
+        object result;
 
         if(routeAttribute.Type == RequestRouteAttribute.Types.Command)
         {
-            var uow = (IUnitOFWorkBase)context.RequestServices.GetService(typeof(IUnitOFWorkBase));
-            await uow.Commit();
+            // для команд нужна транзакция
+            var uow = (IUnitOfWork)context.RequestServices.GetService(typeof(IUnitOfWork));
+            result = await PrivateHandleAsync(handler, request, uow);
+        }
+        else
+        {
+            // для запросов транзакция не нужна
+            result = await handler.BaseHandleAsync(request);
         }
 
-        return reult;
+        return result;
     }
 
     private static async Task<IBaseRequest> DeserializeRequestAsync(HttpContext context, Type requestType)
@@ -114,5 +120,33 @@ public static class Mediator
             context.Response.ContentType = "application/json";
 
         await context.Response.WriteAsJsonAsync(response);
+    }
+
+    private static async Task<object> PrivateHandleAsync(IBaseRequestHandler handler, IBaseRequest request, IUnitOfWork uow)
+    {
+        for (int retry = 0; retry < 5; retry++) // Разрешим максимум 5 попыток.
+        {
+            try
+            {
+                await uow.InitializeAsync();
+                var result = await handler.BaseHandleAsync(request);
+                await uow.CommitAsync();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                await uow.RollbackAsync();
+                if (uow.IsDeadlockException(ex))
+                {
+                    await Task.Delay(retry * 1000);
+                }
+                else
+                {
+                    throw; // Пробрасываем другие исключения.
+                }
+            }
+        }
+
+        throw new Exception("Достигнут лимит повторов транзакций.");
     }
 }

@@ -89,8 +89,8 @@ public sealed class Item : BaseEntity
         if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно удалить ресурс из подписанной отгрузки");
 
-        foreach (var arg in items)
-            arg.Remove();
+        foreach (var item in items)
+            item.Remove();
         
         await data.ShipmentItem.FillByShipmentGuids(shipmentGuids);
 

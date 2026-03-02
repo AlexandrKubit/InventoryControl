@@ -1,16 +1,15 @@
 ﻿namespace App.Queries.Handlers.Warehouse.Shipment.Filters;
 
 using App.Base.Mediator;
-using Exchange.Queries.Warehouse.Shipment.Filters;
 using Base;
-using System.Threading.Tasks;
-using System;
 using Dapper;
+using Exchange.Queries.Warehouse.Shipment.Filters;
+using System.Threading.Tasks;
 
 [RequestRoute("/Warehouse/Shipment/Filters", RequestRouteAttribute.Types.Query)]
 public class Handler : IRequestHandler<Request, Model>
 {
-    public async Task<Model> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Model> HandleAsync(Request request)
     {
         var model = new Model();
 

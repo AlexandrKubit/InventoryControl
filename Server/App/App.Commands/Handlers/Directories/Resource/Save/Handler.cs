@@ -7,12 +7,10 @@ using Exchange.Commands.Directories.Resource.Save;
 using System.Threading.Tasks;
 
 [RequestRoute("/Directories/Resource/Save", RequestRouteAttribute.Types.Command)]
-public class Handler : IRequestHandler<Request, Guid>
+public class Handler(IData data) : IRequestHandler<Request, Guid>
 {
-    public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Guid> HandleAsync(Request request)
     {
-        var data = (IData)provider.GetService(typeof(IData));
-
         if (request.Guid == Guid.Empty)
         {
             var resources = await Resource.CreateRange([request.Name], data);

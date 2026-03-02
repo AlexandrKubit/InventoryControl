@@ -6,6 +6,8 @@ public static class Program
 {
     public static void Main(string[] args)
     {
+        InitializeApplication();
+
         var builder = WebApplication.CreateBuilder(args);
         RegisterServices(builder);
 
@@ -15,11 +17,17 @@ public static class Program
         app.Run();
     }
 
+    private static void InitializeApplication()
+    {
+        Initializer.InitializeMediator();
+        Initializer.InitializeDomain();
+    }
+
     private static void RegisterServices(WebApplicationBuilder builder)
     {
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddMediator();
-        builder.Services.AddInfrastructure();
+        builder.AddQueries();
+        builder.AddInfrastructure();
         builder.Services.AddSwaggerGen(options =>
         {
             options.CustomSchemaIds(type => type.ToString());
@@ -32,6 +40,7 @@ public static class Program
                 policy
                 .SetIsOriginAllowed(x => true)
                 .AllowAnyHeader()
+                .AllowAnyMethod()
                 .AllowCredentials();
             });
         });
@@ -41,7 +50,6 @@ public static class Program
     {
         app.UseMiddleware<ExceptionHandlerMiddleware>();
         app.UseCors("AllowAll");
-        app.UseDomain();
         app.UseMediatorEndpoints();
         app.UseSwagger();
         app.UseSwaggerUI();

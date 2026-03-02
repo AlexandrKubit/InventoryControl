@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 public class Context : DbContext
 {
-    public Context()
+    public Context(DbContextOptions options) : base(options)
     {
         Database.EnsureCreated();
         ChangeTracker.LazyLoadingEnabled = false;
@@ -14,7 +14,6 @@ public class Context : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder
-            .UseNpgsql("Host=127.0.0.1;Port=5432;Database=InventoryControl;Username=postgres;Password=MySupperPassword;")
             .UseSnakeCaseNamingConvention();
     }
 

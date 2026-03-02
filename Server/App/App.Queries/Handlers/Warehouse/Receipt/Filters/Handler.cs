@@ -1,16 +1,15 @@
 ﻿namespace App.Queries.Handlers.Warehouse.Receipt.Filters;
 
 using App.Base.Mediator;
-using Exchange.Queries.Warehouse.Receipt.Filters;
 using Base;
-using System.Threading.Tasks;
-using System;
 using Dapper;
+using Exchange.Queries.Warehouse.Receipt.Filters;
+using System.Threading.Tasks;
 
 [RequestRoute("/Warehouse/Receipt/Filters", RequestRouteAttribute.Types.Query)]
 public class Handler : IRequestHandler<Request, Model>
 {
-    public async Task<Model> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Model> HandleAsync(Request request)
     {
         var model = new Model();
 

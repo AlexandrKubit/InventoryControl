@@ -9,9 +9,9 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
 {
     private Context context { get; set; }
 
-    public ClientRepository(Context context)
+    public ClientRepository(UnitOfWork uow)
     {
-        this.context = context;
+        this.context = uow.Context;
     }
 
     public async Task FillByNames(List<string> names)
@@ -22,9 +22,9 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         await LoadWithCacheAsync(names, func, this);
     }
 
-    protected override async Task Commit()
+    public override void Commit()
     {
-        await EntityCommitHelper.CommitEntities(
+        EntityCommitHelper.CommitEntities(
             dbSet: context.Clients,
             entities: list,
             createMapDelegate: entity => new Entities.Client
@@ -41,14 +41,14 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
                 dbEntity.Condition = entity.Condition;
             }
         );
-        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Client>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await context.Clients
+        return (await context.Clients
             .Where(x => guids.Contains(x.Guid))
+            .ToListAsync())
             .Select(x => Client.IRepository.Restore(x.Guid, x.Name, x.Address, x.Condition))
-            .ToListAsync();
+            .ToList();
     }
 }

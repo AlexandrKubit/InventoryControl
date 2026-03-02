@@ -8,9 +8,9 @@ using System;
 
 internal class ResourceRepository : BaseRepository<Resource>, Resource.IRepository
 {
-    public ResourceRepository(Context context)
+    public ResourceRepository(UnitOfWork uow)
     {
-        this.context = context;
+        this.context = uow.Context;
     }
 
     private Context context { get; set; }
@@ -23,9 +23,9 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
         await LoadWithCacheAsync(names, func, this);
     }
 
-    protected override async Task Commit()
+    public override void Commit()
     {
-        await EntityCommitHelper.CommitEntities(
+        EntityCommitHelper.CommitEntities(
             dbSet: context.Resources,
             entities: list,
             createMapDelegate: entity => new Entities.Resource
@@ -40,14 +40,14 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
                 dbEntity.Condition = entity.Condition;
             }
         );
-        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Resource>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await context.Resources
+        return (await context.Resources
             .Where(x => guids.Contains(x.Guid))
+            .ToListAsync())
             .Select(x => Resource.IRepository.Restore(x.Guid, x.Name, x.Condition))
-            .ToListAsync();
+            .ToList();
     }
 }

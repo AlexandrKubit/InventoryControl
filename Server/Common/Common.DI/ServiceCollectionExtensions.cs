@@ -1,25 +1,26 @@
 ﻿namespace Common.DI;
 
 using App.Base.Mediator;
-using App.Commands.Base;
+using App.Queries.Base;
 using Domain.Base;
 using Infrastructure.Base;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddMediator(this IServiceCollection services)
+    public static void AddQueries(this WebApplicationBuilder builder)
     {
-        Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(ForDI)));
-        Mediator.RegisterHandlersAndValidators(Assembly.GetAssembly(typeof(App.Queries.Base.Connection)));
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        Connection.SetCommectionString(connectionString);
     }
 
-    public static void AddInfrastructure(this IServiceCollection services)
+    public static void AddInfrastructure(this WebApplicationBuilder builder)
     {
-        services.AddScoped<UnitOfWork>();
-        services.AddScoped<IData>(sp => sp.GetService<UnitOfWork>());
-        services.AddScoped<IUnitOFWorkBase>(sp => sp.GetService<UnitOfWork>());
-        services.AddScoped<Context>();
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddScoped<UnitOfWork>(serviceProvider => new UnitOfWork(serviceProvider, connectionString));
+        builder.Services.AddScoped<IData>(sp => sp.GetService<UnitOfWork>());
+        builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetService<UnitOfWork>());
     }
 }

@@ -6,7 +6,7 @@ namespace UI.Services;
 
 public static class HttpService
 {
-    public static string baseUrl = "http://localhost:8081";
+    public static string baseUrl = "http://193.32.203.182:8081";
 
     public static async Task<Response<TResponse>> GetDataAsync<TRequest, TResponse>(string url, TRequest request)
     {

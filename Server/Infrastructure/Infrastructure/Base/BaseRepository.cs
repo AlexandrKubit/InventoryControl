@@ -3,7 +3,18 @@
 using Domain.Base;
 using System.Runtime.CompilerServices;
 
-public abstract class BaseRepository<TEntity> where TEntity : BaseEntity
+public abstract class BaseRepository
+{
+    /// <summary>
+    /// Метод вызывается в конце сценария, для того чтобы синхронизировать данные в БД и данные в коллекции
+    /// Условно если где то выбросилось исключение, то никакие данные даже не будут переданы в БД
+    /// Нужно реализовывть в каждом репозитории
+    /// В БД должны отправиться только те данные, которые были помечены как "создан", "изменен" или "удален"
+    /// </summary>
+    public abstract void Commit();
+}
+
+public abstract class BaseRepository<TEntity> : BaseRepository where TEntity : BaseEntity
 {
     /// <summary>
     /// Коллекция сущностей TEntity : BaseEntity, доступны лишь те, которые не помечены как "удаленные"
@@ -63,14 +74,6 @@ public abstract class BaseRepository<TEntity> where TEntity : BaseEntity
     /// <param name="guids"></param>
     /// <returns></returns>
     protected abstract Task<List<TEntity>> GetFromDbByIdsAsync(List<Guid> guids);
-
-    /// <summary>
-    /// Метод вызывается в конце сценария, для того чтобы синхронизировать данные в БД и данные в коллекции
-    /// Условно если где то выбросилось исключение, то никакие данные даже не будут переданы в БД
-    /// Нужно реализовывть в каждом репозитории
-    /// В БД должны отправиться только те данные, которые были помечены как "создан", "изменен" или "удален"
-    /// </summary>
-    protected abstract Task Commit();
 
 
     ///// <summary>

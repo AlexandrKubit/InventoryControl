@@ -1,16 +1,15 @@
 ﻿namespace App.Queries.Handlers.Warehouse.Balance.List;
 
 using App.Base.Mediator;
-using Exchange.Queries.Warehouse.Balance.List;
 using Base;
-using System.Threading.Tasks;
-using System;
 using Dapper;
+using Exchange.Queries.Warehouse.Balance.List;
+using System.Threading.Tasks;
 
 [RequestRoute("/Warehouse/Balance/List", RequestRouteAttribute.Types.Query)]
 public class Handler : IRequestHandler<Request, Model>
 {
-    public async Task<Model> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Model> HandleAsync(Request request)
     {
         var model = new Model();
 
@@ -26,7 +25,7 @@ public class Handler : IRequestHandler<Request, Model>
         ";
 
         using var connection = Connection.Get();
-        model.Balances = (await connection.QueryAsync<Model.Balance>(sql, new {request.ResourceGuids, request.MeasureUnitGuids})).ToList();
+        model.Balances = (await connection.QueryAsync<Model.Balance>(sql, new { request.ResourceGuids, request.MeasureUnitGuids })).ToList();
 
         return model;
     }

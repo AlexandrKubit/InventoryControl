@@ -17,15 +17,14 @@ public static class EntityCommitHelper
     /// <param name="createMapDelegate">Делегат на метод который умеет создавать entityMap из entity</param>
     /// <param name="updateMapDelegate">Делегат на метод по изменению entityMap</param>
     /// <returns></returns>
-    public static async Task CommitEntities<TEntity, TEntityMap>(
+    public static void CommitEntities<TEntity, TEntityMap>(
         DbSet<TEntityMap> dbSet,
         IEnumerable<TEntity> entities,
         Func<TEntity, TEntityMap> createMapDelegate,
         Action<TEntityMap, TEntity> updateMapDelegate)
         where TEntity : BaseEntity
         where TEntityMap : class, IGuidIdentity
-    {
-        
+    {      
         // Добавление новых
         var created = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Created);
         dbSet.AddRange(created.Select(createMapDelegate));
@@ -33,7 +32,7 @@ public static class EntityCommitHelper
         // Обновление существующих
         var modified = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Updated);
         var modifiedIds = modified.Select(x => x.Guid).ToList();
-        var inDb = await dbSet.Where(x => modifiedIds.Contains(x.Guid)).ToListAsync();
+        var inDb = dbSet.Local.Where(x => modifiedIds.Contains(x.Guid)).ToList();
 
         foreach (var dbEntity in inDb)
         {

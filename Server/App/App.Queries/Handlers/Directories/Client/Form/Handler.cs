@@ -1,16 +1,15 @@
 ﻿namespace App.Queries.Handlers.Directories.Client.Form;
 
 using App.Base.Mediator;
-using Exchange.Queries.Directories.Client.Form;
 using Base;
-using System.Threading.Tasks;
-using System;
 using Dapper;
+using Exchange.Queries.Directories.Client.Form;
+using System.Threading.Tasks;
 
 [RequestRoute("/Directories/Client/Form", RequestRouteAttribute.Types.Query)]
 public class Handler : IRequestHandler<Request, Model>
 {
-    public async Task<Model> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Model> HandleAsync(Request request)
     {
         var sql = @$"
             SELECT guid, name, address, condition
@@ -19,7 +18,7 @@ public class Handler : IRequestHandler<Request, Model>
         ";
 
         using var connection = Connection.Get();
-        var model = await connection.QueryFirstAsync<Model>(sql, new {request.Guid});
+        var model = await connection.QueryFirstAsync<Model>(sql, new { request.Guid });
 
         return model;
     }

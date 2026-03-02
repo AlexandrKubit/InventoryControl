@@ -2,7 +2,7 @@
 
 using Common.Exceptions;
 using Domain.Base;
-using Domain.Entities.Warehouse.Receipt;
+using System;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -20,16 +20,15 @@ public sealed class Balance : BaseEntity
         public Task FillByResourceGuids(List<Guid> resourceGuids);
     }
 
-
-    // мы передаем наши приватные методы только тем сущностям, которые имеют право изменять кол-во ресурсов на складе
-    // этот статический конструктор, как и остальные статические конструкторы BaseEntity, вызовется в момент инициализации приложения
+    // подписываемся на события 
     static Balance()
     {
-        Item.SetAddRangeToStock(AddRangeToStock);
-        Item.SetRemoveRangeFromStock(RemoveRangeFromStock);
+        Receipt.Item.OnCreatedRange(OnReceiptItemCreatedRangeHandler);
+        Receipt.Item.OnUpdatedRange(OnReceiptItemUpdatedRangeHandler);
+        Receipt.Item.OnDeletedRange(OnReceiptItemDeletedRangeHandler);
 
-        Shipment.Document.SetAddRangeToStock(AddRangeToStock);
-        Shipment.Document.SetRemoveRangeFromStock(RemoveRangeFromStock);
+        Shipment.Document.OnSignedRange(OnShipmentDocumentSignedRangeHandler);
+        Shipment.Document.OnUnsignedRange(OnShipmentDocumentUnsignedRangeHandler);
     }
 
     public Guid ResourceGuid { get; }
@@ -91,5 +90,97 @@ public sealed class Balance : BaseEntity
                 throw new DomainException("На складе отсутствуют ресурсы");
             }
         }
+    }
+
+
+    private static async Task OnReceiptItemCreatedRangeHandler(Receipt.Item.CreatedRangeArg arg)
+    {
+        var args = arg.Items.Select(x => new AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity)).ToList();
+        await AddRangeToStock(args, arg.Data);
+    }
+
+    private static async Task OnReceiptItemUpdatedRangeHandler(Receipt.Item.UpdatedRangeArg arg)
+    {
+        var netChanges = new Dictionary<(Guid ResourceGuid, Guid MeasureUnitGuid), decimal>();
+
+        foreach (var change in arg.Changes)
+        {
+            var oldKey = (change.Old.ResourceGuid, change.Old.MeasureUnitGuid);
+            var newKey = (change.New.ResourceGuid, change.New.MeasureUnitGuid);
+
+            // Вычитаем старое количество
+            if (netChanges.TryGetValue(oldKey, out var oldDelta))
+                netChanges[oldKey] = oldDelta - change.Old.Quantity;
+            else
+                netChanges[oldKey] = -change.Old.Quantity;
+
+            // Добавляем новое количество
+            if (netChanges.TryGetValue(newKey, out var newDelta))
+                netChanges[newKey] = newDelta + change.New.Quantity;
+            else
+                netChanges[newKey] = change.New.Quantity;
+        }
+
+        var toRemove = new List<Balance.RemoveRangeFromStockArg>();
+        var toAdd = new List<Balance.AddRangeToStockArg>();
+
+        foreach (var kv in netChanges)
+        {
+            if (kv.Value < 0)
+            {
+                toRemove.Add(new Balance.RemoveRangeFromStockArg(
+                    kv.Key.ResourceGuid,
+                    kv.Key.MeasureUnitGuid,
+                    -kv.Value)); // передаём положительное количество для списания
+            }
+            else if (kv.Value > 0)
+            {
+                toAdd.Add(new Balance.AddRangeToStockArg(
+                    kv.Key.ResourceGuid,
+                    kv.Key.MeasureUnitGuid,
+                    kv.Value));
+            }
+            // При kv.Value == 0 изменений нет, пропускаем
+        }
+
+        // Применяем изменения в правильном порядке (сначала списание, потом добавление)
+        if (toRemove.Any())
+            await RemoveRangeFromStock(toRemove, arg.Data);
+        if (toAdd.Any())
+            await AddRangeToStock(toAdd, arg.Data);
+    }
+
+    private static async Task OnReceiptItemDeletedRangeHandler(Receipt.Item.DeletedRangeArg arg)
+    {
+        var args = arg.Items.Select(x => new RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity)).ToList();
+        await RemoveRangeFromStock(args, arg.Data);
+    }
+
+    private static async Task OnShipmentDocumentSignedRangeHandler(Shipment.Document.SignedRangeArg arg)
+    {
+        var guids = arg.Documents.Select(x => x.Guid).Distinct().ToList();
+
+        await arg.Data.ShipmentItem.FillByShipmentGuids(guids);
+        var items = arg.Data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
+
+        var removeRangeFromStockArgs = items
+            .Select(x => new RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
+            .ToList();
+
+        await RemoveRangeFromStock(removeRangeFromStockArgs, arg.Data);
+    }
+
+    private static async Task OnShipmentDocumentUnsignedRangeHandler(Shipment.Document.UnsignedRangeArg arg)
+    {
+        var guids = arg.Documents.Select(x => x.Guid).Distinct().ToList();
+
+        await arg.Data.ShipmentItem.FillByShipmentGuids(guids);
+        var items = arg.Data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
+
+        var addRangeToStockArgs = items
+            .Select(x => new AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
+            .ToList();
+
+        await AddRangeToStock(addRangeToStockArgs, arg.Data);
     }
 }

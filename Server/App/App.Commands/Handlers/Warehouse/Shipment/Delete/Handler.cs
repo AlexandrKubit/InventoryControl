@@ -7,12 +7,11 @@ using Exchange.Commands.Warehouse.Shipment.Delete;
 using System.Threading.Tasks;
 
 [RequestRoute("/Warehouse/Shipment/Delete", RequestRouteAttribute.Types.Command)]
-public class Handler : IRequestHandler<Request, Guid>
+public class Handler(IData data) : IRequestHandler<Request, Guid>
 {
-    public async Task<Guid> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Guid> HandleAsync(Request request)
     {
-        var uow = (IData)provider.GetService(typeof(IData));
-        await Document.DeleteRange([request.Guid], uow);
+        await Document.DeleteRange([request.Guid], data);
         return request.Guid;
     }
 }

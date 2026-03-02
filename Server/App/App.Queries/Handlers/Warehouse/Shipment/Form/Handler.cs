@@ -1,16 +1,15 @@
 ﻿namespace App.Queries.Handlers.Warehouse.Shipment.Form;
 
 using App.Base.Mediator;
-using Exchange.Queries.Warehouse.Shipment.Form;
 using Base;
-using System.Threading.Tasks;
-using System;
 using Dapper;
+using Exchange.Queries.Warehouse.Shipment.Form;
+using System.Threading.Tasks;
 
 [RequestRoute("/Warehouse/Shipment/Form", RequestRouteAttribute.Types.Query)]
 public class Handler : IRequestHandler<Request, Model>
 {
-    public async Task<Model> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Model> HandleAsync(Request request)
     {
         var model = new Model();
 
@@ -37,9 +36,7 @@ public class Handler : IRequestHandler<Request, Model>
 			INSERT INTO resource_guids
 			SELECT DISTINCT resource_guid
 			FROM balances
-			WHERE quantity > 0
-			  AND (SELECT condition FROM shipment_condition) = 1
-			  AND resource_guid NOT IN (SELECT guid FROM resource_guids);
+			WHERE quantity > 0;
             
             insert into measure_unit_guids
             SELECT distinct measure_unit_guid
@@ -49,9 +46,7 @@ public class Handler : IRequestHandler<Request, Model>
 			INSERT INTO measure_unit_guids
 			SELECT DISTINCT measure_unit_guid
 			FROM balances
-			WHERE quantity > 0
-			  AND (SELECT condition FROM shipment_condition) = 1
-			  AND measure_unit_guid NOT IN (SELECT guid FROM measure_unit_guids);
+			WHERE quantity > 0;
 
             select guid, number, client_guid as ClientGuid, date::date, condition
             from shipments

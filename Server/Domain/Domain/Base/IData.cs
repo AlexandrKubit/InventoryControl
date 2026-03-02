@@ -2,6 +2,8 @@
 
 using E = Entities;
 
+// по сути это UoW, но на уровне домена это всего лишь "умные" коллекции данных 
+// можно воспринимать IData как личная песочница для запроса
 public interface IData
 {
     E.Directories.Client.IRepository Client { get; }

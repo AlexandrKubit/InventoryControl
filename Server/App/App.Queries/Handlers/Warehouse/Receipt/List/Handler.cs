@@ -1,16 +1,16 @@
 ﻿namespace App.Queries.Handlers.Warehouse.Receipt.List;
 
 using App.Base.Mediator;
-using Exchange.Queries.Warehouse.Receipt.List;
 using Base;
-using System.Threading.Tasks;
-using System;
 using Dapper;
+using Exchange.Queries.Warehouse.Receipt.List;
+using System;
+using System.Threading.Tasks;
 
 [RequestRoute("/Warehouse/Receipt/List", RequestRouteAttribute.Types.Query)]
 public class Handler : IRequestHandler<Request, Model>
 {
-    public async Task<Model> HandleAsync(Request request, IServiceProvider provider)
+    public async Task<Model> HandleAsync(Request request)
     {
         var model = new Model();
 
@@ -28,11 +28,12 @@ public class Handler : IRequestHandler<Request, Model>
         ";
 
         using var connection = Connection.Get();
-        List<Response> responses = (await connection.QueryAsync<Response>(sql, new {
+        List<Response> responses = (await connection.QueryAsync<Response>(sql, new
+        {
             request.Start,
             request.End,
             request.Numbers,
-            request.ResourceGuids, 
+            request.ResourceGuids,
             request.MeasureUnitGuids
         })).ToList();
 

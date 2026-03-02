@@ -40,7 +40,7 @@ public partial class Form
                     ResourceGuid = b.ResourceGuid,
                     MeasureUnitGuid = b.MeasureUnitGuid,
                     CurrentQuantity = 0,
-                    MaxQuantity = b.Quantity
+                    MaxQuantity = Model.Document.Condition == 2 ? int.MaxValue : b.Quantity
                 });
             }
 

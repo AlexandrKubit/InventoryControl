@@ -1,7 +1,6 @@
 ﻿namespace Domain.Entities.Warehouse.Receipt;
 
 using Domain.Base;
-using Domain.Entities.Warehouse;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,14 +21,28 @@ public sealed class Item : BaseEntity
     }
 
 
-    // при создании, изменении и удалении ресурсов накладной, необходимо изменять кол-во ресурсов на складе
+    // при создании, изменении и удалении ресурсов поступления, необходимо изменять кол-во ресурсов на складе (баланс)
     // ресурсы на складе просто так нельзя удалять, добавлять или изменять на складе
-    // поэтому эти методы приватны и мы передаем их тем сущностям, которые имеют право изменять кол-во ресурсов на складе
-    #region delegates
-    private static Func<List<Balance.AddRangeToStockArg>, IData, Task> addRangeToStock;
-    private static Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> removeRangeFromStock;
-    public static void SetAddRangeToStock(Func<List<Balance.AddRangeToStockArg>, IData, Task> func) => addRangeToStock ??= func;
-    public static void SetRemoveRangeFromStock(Func<List<Balance.RemoveRangeFromStockArg>, IData, Task> func) => removeRangeFromStock ??= func;
+    // поэтому баланс подписывается на эти события
+    #region Events
+    public record CreatedRangeArg(List<Item> Items, IData Data);
+    public static Action<Func<CreatedRangeArg, Task>> OnCreatedRange => CreatedRange.Subscribe;
+    private static readonly DomainEvent<CreatedRangeArg> CreatedRange = new(); // один подписчик - баланс на складе, порядок не важен  
+
+
+    // представим что у нас было бы несколько подписчиков и был бы важен порядок
+    private static readonly Type[] UpdatedRangeOrder = [
+        typeof(Balance), // сначала пересчитать баланс при изменении поступления
+        //typeof(SomeEntity), // потом сделать что то
+    ];
+    public record ItemData(Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
+    public record UpdatedRangeArg(List<(ItemData Old, ItemData New)> Changes, IData Data);
+    public static Action<Func<UpdatedRangeArg, Task>> OnUpdatedRange => UpdatedRange.Subscribe;
+    private static readonly DomainEvent<UpdatedRangeArg> UpdatedRange = new(UpdatedRangeOrder); // порядок важен
+
+    public record DeletedRangeArg(List<Item> Items, IData Data);
+    public static Action<Func<DeletedRangeArg, Task>> OnDeletedRange => DeletedRange.Subscribe;
+    private static readonly DomainEvent<DeletedRangeArg> DeletedRange = new(); // один подписчик - баланс на складе, порядок не важен  
     #endregion
 
     public Guid ReceiptGuid { get; }
@@ -58,11 +71,7 @@ public sealed class Item : BaseEntity
             items.Add(item);
         }
 
-        List<Balance.AddRangeToStockArg> addRangeToStockArgs = items
-            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
-
-        await addRangeToStock(addRangeToStockArgs, data);
+        await CreatedRange.Invoke(new CreatedRangeArg(items, data));
         return items;
     }
 
@@ -73,15 +82,15 @@ public sealed class Item : BaseEntity
         await data.ReceiptItem.FillByGuids(guids);
         var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
 
-        var removeRangeFromStockArgs = items
-            .Select(x => new Balance.RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
-
-        await removeRangeFromStock(removeRangeFromStockArgs, data);
+        List<(ItemData Old, ItemData New)> сhanges = [];
 
         foreach (var item in items)
         {
             var arg = args.First(x => x.Guid == item.Guid);
+
+            ItemData old = new(item.ResourceGuid, item.MeasureUnitGuid, item.Quantity);
+            ItemData _new = new(arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
+            сhanges.Add((old, _new));
 
             item.ResourceGuid = arg.ResourceGuid;
             item.MeasureUnitGuid = arg.MeasureUnitGuid;
@@ -89,11 +98,7 @@ public sealed class Item : BaseEntity
             item.Update();
         }
 
-        var addRangeToStockArgs = items
-            .Select(x => new Balance.AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
-
-        await addRangeToStock(addRangeToStockArgs, data);
+        await UpdatedRange.Invoke(new UpdatedRangeArg(сhanges, data));
     }
 
 
@@ -102,13 +107,9 @@ public sealed class Item : BaseEntity
         await data.ReceiptItem.FillByGuids(guids);
         var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
 
-        var removeRangeFromStockArgs = items
-            .Select(x => new Balance.RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
-
-        await removeRangeFromStock(removeRangeFromStockArgs, data);
-
         foreach (var item in items)
             item.Remove();
+
+        await DeletedRange.Invoke(new DeletedRangeArg(items, data));
     }
 }

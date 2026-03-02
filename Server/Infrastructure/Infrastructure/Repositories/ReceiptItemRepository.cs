@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 internal class ReceiptItemRepository : BaseRepository<Item>, Item.IRepository
 {
-    public ReceiptItemRepository(Context context)
+    public ReceiptItemRepository(UnitOfWork uow)
     {
-        this.context = context;
+        this.context = uow.Context;
     }
 
     private Context context { get; set; }
@@ -35,9 +35,9 @@ internal class ReceiptItemRepository : BaseRepository<Item>, Item.IRepository
         await LoadWithCacheAsync(resourceGuids, func, this);
     }
 
-    protected override async Task Commit()
+    public override void Commit()
     {
-        await EntityCommitHelper.CommitEntities(
+        EntityCommitHelper.CommitEntities(
             dbSet: context.ReceiptItems,
             entities: list,
             createMapDelegate: entity => new Entities.ReceiptItem
@@ -56,14 +56,14 @@ internal class ReceiptItemRepository : BaseRepository<Item>, Item.IRepository
                 dbEntity.Quantity = entity.Quantity;
             }
         );
-        await context.SaveChangesAsync();
     }
 
     protected override async Task<List<Item>> GetFromDbByIdsAsync(List<Guid> guids)
     {
-        return await context.ReceiptItems
+        return (await context.ReceiptItems
             .Where(x => guids.Contains(x.Guid))
+            .ToListAsync())     
             .Select(x => Item.IRepository.Restore(x.Guid, x.ReceiptGuid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToListAsync();            
+            .ToList();
     }
 }
