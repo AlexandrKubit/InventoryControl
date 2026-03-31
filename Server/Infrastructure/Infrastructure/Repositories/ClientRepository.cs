@@ -14,6 +14,12 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         this.context = uow.Context;
     }
 
+    /// <summary>
+    /// Декларативная загрузка: домен запрашивает данные по именам.
+    /// Метод использует универсальный кэширующий механизм LoadWithCacheAsync,
+    /// который гарантирует, что каждый уникальный набор аргументов будет загружен из БД только один раз
+    /// в рамках жизненного цикла репозитория (и, соответственно, UoW).
+    /// </summary>
     public async Task FillByNames(List<string> names)
     {
         var func = async (IEnumerable<string> args) =>
@@ -22,6 +28,12 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         await LoadWithCacheAsync(names, func, this);
     }
 
+    /// <summary>
+    /// Фиксация изменений: хэлпер EntityCommitHelper обрабатывает все сущности из коллекции list,
+    /// анализируя их ModificationType (Created, Updated, Removed), и применяет соответствующие
+    /// операции к DbSet context.Clients. Это позволяет сохранить атомарность и избавляет
+    /// домен от явных вызовов репозитория для сохранения.
+    /// </summary>
     public override void Commit()
     {
         EntityCommitHelper.CommitEntities(
@@ -43,6 +55,12 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         );
     }
 
+    /// <summary>
+    /// Технический метод загрузки сущностей из БД по списку идентификаторов.
+    /// Возвращает доменные объекты, используя protected статический метод Restore,
+    /// объявленный в Client.IRepository. Это единственный способ восстановить сущность
+    /// из БД, не нарушая её инкапсуляцию (конструктор приватный).
+    /// </summary>
     protected override async Task<List<Client>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.Clients

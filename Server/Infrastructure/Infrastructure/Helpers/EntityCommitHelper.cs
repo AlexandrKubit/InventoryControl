@@ -10,13 +10,6 @@ public static class EntityCommitHelper
     /// Метод удобен для использования при реализации метода commit в репозитории.
     /// Его назначение - вынести однотипные повторяющиеся действия из репозитория.
     /// </summary>
-    /// <typeparam name="TEntity">Доменная сущность</typeparam>
-    /// <typeparam name="TEntityMap">Сущность из контексата EF</typeparam>
-    /// <param name="dbSet">Класс, отражающий таблицу БД</param>
-    /// <param name="entities">Список доменных сущностей для сохранения в БД</param>
-    /// <param name="createMapDelegate">Делегат на метод который умеет создавать entityMap из entity</param>
-    /// <param name="updateMapDelegate">Делегат на метод по изменению entityMap</param>
-    /// <returns></returns>
     public static void CommitEntities<TEntity, TEntityMap>(
         DbSet<TEntityMap> dbSet,
         IEnumerable<TEntity> entities,
