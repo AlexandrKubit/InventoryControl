@@ -45,7 +45,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
 
     /// <summary>
     /// Метод сравнивает полученные guids с теми что уже добавлены в коллекцию
-    /// и передает те, которых еще нет в коллекции в метод GetFromDbByIdsAsync,
+    /// и передает те, которых еще нет в коллекции в метод GetFromDbByGuidsAsync,
     /// этот метод возвращает из БД сущности и потом эти сущности добавляются в коллекцию
     /// </summary>
     /// <param name="guids"></param>
@@ -60,7 +60,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
 
         if (guids.Count != 0)
         {
-            var inDb = await GetFromDbByIdsAsync(guids);
+            var inDb = await GetFromDbByGuidsAsync(guids);
             list.AddRange(inDb);
         }
     }
@@ -73,7 +73,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
     /// </summary>
     /// <param name="guids"></param>
     /// <returns></returns>
-    protected abstract Task<List<TEntity>> GetFromDbByIdsAsync(List<Guid> guids);
+    protected abstract Task<List<TEntity>> GetFromDbByGuidsAsync(List<Guid> guids);
 
 
     ///// <summary>

@@ -60,7 +60,7 @@ internal class ShipmentItemRepository : BaseRepository<Item>, Item.IRepository
         );
     }
 
-    protected override async Task<List<Item>> GetFromDbByIdsAsync(List<Guid> guids)
+    protected override async Task<List<Item>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.ShipmentItems
             .Where(x => guids.Contains(x.Guid))

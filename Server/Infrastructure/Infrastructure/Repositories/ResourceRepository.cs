@@ -42,7 +42,7 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
         );
     }
 
-    protected override async Task<List<Resource>> GetFromDbByIdsAsync(List<Guid> guids)
+    protected override async Task<List<Resource>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.Resources
             .Where(x => guids.Contains(x.Guid))

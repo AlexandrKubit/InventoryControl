@@ -63,7 +63,7 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
         );
     }
 
-    protected override async Task<List<Balance>> GetFromDbByIdsAsync(List<Guid> guids)
+    protected override async Task<List<Balance>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.Balances
             .Where(x => guids.Contains(x.Guid))

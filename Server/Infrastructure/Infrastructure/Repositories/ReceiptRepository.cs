@@ -42,7 +42,7 @@ internal class ReceiptRepository : BaseRepository<Document>, Document.IRepositor
         );
     }
 
-    protected override async Task<List<Document>> GetFromDbByIdsAsync(List<Guid> guids)
+    protected override async Task<List<Document>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.Receipts
             .Where(x => guids.Contains(x.Guid))

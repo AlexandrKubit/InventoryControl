@@ -43,7 +43,7 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         );
     }
 
-    protected override async Task<List<Client>> GetFromDbByIdsAsync(List<Guid> guids)
+    protected override async Task<List<Client>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.Clients
             .Where(x => guids.Contains(x.Guid))

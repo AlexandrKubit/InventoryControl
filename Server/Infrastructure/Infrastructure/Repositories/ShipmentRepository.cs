@@ -52,7 +52,7 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
         );
     }
 
-    protected override async Task<List<Document>> GetFromDbByIdsAsync(List<Guid> guids)
+    protected override async Task<List<Document>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.Shipments
             .Where(x => guids.Contains(x.Guid))

@@ -41,7 +41,7 @@ internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.
         );
     }
 
-    protected override async Task<List<MeasureUnit>> GetFromDbByIdsAsync(List<Guid> guids)
+    protected override async Task<List<MeasureUnit>> GetFromDbByGuidsAsync(List<Guid> guids)
     {
         return (await context.MeasureUnits
             .Where(x => guids.Contains(x.Guid))
