@@ -3,7 +3,7 @@
 using Domain.Base;
 using System.Runtime.CompilerServices;
 
-public abstract class BaseRepository
+internal abstract class BaseRepository
 {
     /// <summary>
     /// Метод вызывается в конце сценария, для того чтобы синхронизировать данные в БД и данные в коллекции
@@ -14,7 +14,7 @@ public abstract class BaseRepository
     public abstract void Commit();
 }
 
-public abstract class BaseRepository<TEntity> : BaseRepository where TEntity : BaseEntity
+internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity : BaseEntity
 {
     /// <summary>
     /// Коллекция сущностей TEntity : BaseEntity, доступны лишь те, которые не помечены как "удаленные"
