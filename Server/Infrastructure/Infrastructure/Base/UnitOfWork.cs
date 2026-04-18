@@ -12,6 +12,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System;
 
+/// <summary>
+/// Единица работы (Unit of Work) — главный координатор инфраструктуры.
+/// Объединяет доступ к репозиториям и управление транзакцией.
+/// Живёт в рамках одного сценария (запроса), обеспечивая изоляцию и атомарность.
+/// </summary>
 public sealed class UnitOfWork : IData, IUnitOfWork
 {
     internal Context Context { get; set; }
@@ -27,7 +32,10 @@ public sealed class UnitOfWork : IData, IUnitOfWork
         this.connectionString = connectionString;
     }
 
-    // Универсальный метод для получения репозитория
+    /// <summary>
+    /// Ленивое получение репозитория с кэшированием в рамках UoW.
+    /// Использует ActivatorUtilities, чтобы репозиторий получил все зависимости (в том числе Context).
+    /// </summary>
     private T Get<T>() where T : BaseRepository
     {
         var type = typeof(T);
@@ -42,6 +50,10 @@ public sealed class UnitOfWork : IData, IUnitOfWork
         return (T)repository;
     }
 
+    /// <summary>
+    /// Инициализация UoW: создание контекста EF, открытие соединения и начало транзакции.
+    /// Вызывается один раз перед началом работы со сценарием.
+    /// </summary>
     public async Task InitializeAsync()
     {
         var options = new DbContextOptionsBuilder<Context>()
@@ -54,6 +66,13 @@ public sealed class UnitOfWork : IData, IUnitOfWork
         repositories = new();
     }
 
+    /// <summary>
+    /// Фиксация изменений:
+    /// 1. Каждый репозиторий синхронизирует свои коллекции с DbSet (создание/обновление/удаление).
+    /// 2. Сохранение изменений в БД.
+    /// 3. Коммит транзакции.
+    /// После коммита транзакция уничтожается.
+    /// </summary>
     public async Task CommitAsync()
     {
         foreach (var item in repositories)
@@ -67,6 +86,9 @@ public sealed class UnitOfWork : IData, IUnitOfWork
         // тут можно вызвать обещания инфраструктурных сервисов например отправить email
     }
 
+    /// <summary>
+    /// Откат изменений. Освобождает транзакцию и контекст.
+    /// </summary>
     public async Task RollbackAsync()
     {
         if (transaction != null)
@@ -82,6 +104,10 @@ public sealed class UnitOfWork : IData, IUnitOfWork
         }
     }
 
+    /// <summary>
+    /// Проверка, является ли исключение deadlock'ом (код 40P01 для PostgreSQL).
+    /// Используется для реализации стратегий повторных попыток.
+    /// </summary>
     public bool IsDeadlockException(Exception exception)
     {
         if (exception == null)
@@ -99,6 +125,8 @@ public sealed class UnitOfWork : IData, IUnitOfWork
         return false;
     }
 
+    // Доступ к конкретным репозиториям через интерфейс IData.
+    // Репозитории создаются лениво и кэшируются.
     Client.IRepository IData.Client => Get<ClientRepository>();
     MeasureUnit.IRepository IData.MeasureUnit => Get<MeasureUnitRepository>();
     Resource.IRepository IData.Resource => Get<ResourceRepository>();
