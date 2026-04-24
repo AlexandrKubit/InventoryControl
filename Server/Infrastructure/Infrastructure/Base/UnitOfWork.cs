@@ -113,7 +113,8 @@ public sealed class UnitOfWork : IData, IUnitOfWork
         if (exception == null)
             return false;
 
-        if (exception is PostgresException postgresEx && postgresEx.SqlState == "40P01")
+        if (exception is PostgresException postgresEx 
+            && (postgresEx.SqlState == "40P01" || postgresEx.SqlState == "40001"))
             return true;
 
         if (exception is DbUpdateException dbUpdateEx)
