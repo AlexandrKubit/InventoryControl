@@ -2,12 +2,22 @@
 using Domain.Entities.Directories;
 using Domain.Entities.Warehouse;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using TestProject.Infrastructure;
+using TestProject.Infrastructure.Repositories;
 
 namespace Tests.Infrastructure
 {
     internal class TestUnitOfWork : IData
     {
+        static TestUnitOfWork()
+        {
+            var type = typeof(Domain.Base.BaseEntity);
+            var asm = Assembly.GetAssembly(type);
+            var types = asm.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(type)).ToList();
+            types.ForEach(t => RuntimeHelpers.RunClassConstructor(t.TypeHandle));
+        }
+
         private readonly Dictionary<Type, object> repositories = new Dictionary<Type, object>();
 
         public TestUnitOfWork()
@@ -20,7 +30,7 @@ namespace Tests.Infrastructure
 
             foreach (var repoType in testRepositoryTypes)
             {
-                var repositoryInstance = Activator.CreateInstance(repoType) 
+                var repositoryInstance = Activator.CreateInstance(repoType)
                     ?? throw new Exception($"Не удалось найти репозиторий для типа {repoType}");
                 repositories[repoType] = repositoryInstance;
             }
@@ -49,9 +59,9 @@ namespace Tests.Infrastructure
         public Client.IRepository Client => Get<TestClientRepository>();
         public MeasureUnit.IRepository MeasureUnit { get; }
         public Resource.IRepository Resource { get; }
-        public Balance.IRepository Balance { get; }
+        public Balance.IRepository Balance => Get<TestBalanceRepository>();
         public Domain.Entities.Warehouse.Receipt.Document.IRepository Receipt { get; }
-        public Domain.Entities.Warehouse.Receipt.Item.IRepository ReceiptItem { get; }
+        public Domain.Entities.Warehouse.Receipt.Item.IRepository ReceiptItem => Get<TestReceiptItemRepository>();
         public Domain.Entities.Warehouse.Shipment.Document.IRepository Shipment { get; }
         public Domain.Entities.Warehouse.Shipment.Item.IRepository ShipmentItem { get; }
     }
