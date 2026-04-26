@@ -29,7 +29,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
     /// то вызов AddEntity из любого другого места теряет смысл, т.к. сущность просто не будет добавлена в коллекцию
     /// </summary>
     /// <param name="entity"></param>
-    public void AddEntity(TEntity entity)
+    public void Add(TEntity entity)
     {
         if (entity.ModificationType == BaseEntity.ModificationTypes.Created && !list.Any(e => e.Guid == entity.Guid))
         {

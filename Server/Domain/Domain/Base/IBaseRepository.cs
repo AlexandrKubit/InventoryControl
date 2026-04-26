@@ -7,7 +7,7 @@ public interface IBaseRepository<TEntity> where TEntity : BaseEntity
     // В ходе сценария эта коллекция наполняется данными, эти данные как то изменяются, а в конце сценария нужно обновить данные в самой БД 
 
     public IEnumerable<TEntity> List { get; }
-    public void AddEntity(TEntity entity);
+    public void Add(TEntity entity);
 
     // этот метод и другие FillBy... стоит воспринимать как декларацию потребности
     // другими словами "будь готов отвечать на вопросы об этих данных" или "убедись, что эти данные находятся в коллекции"

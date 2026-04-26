@@ -51,7 +51,7 @@ public class BaseEntity
         if (ModificationType == ModificationTypes.None)
         {
             ModificationType = ModificationTypes.Created;
-            repository.AddEntity((TEntity)this);
+            repository.Add((TEntity)this);
         }
         else
             throw new Exception("Неправильное использование метода Append");
