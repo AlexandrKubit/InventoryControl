@@ -60,7 +60,7 @@ public class Handler : IRequestHandler<Request, Model>
         public Guid Guid { get; set; }
         public string Number { get; set; }
         public string ClientName { get; set; }
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
         public int Condition { get; set; }
         public string ResourceName { get; set; }
         public string MeasureUnitName { get; set; }
