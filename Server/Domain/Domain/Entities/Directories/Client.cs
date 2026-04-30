@@ -54,8 +54,9 @@ public sealed class Client : BaseEntity
         foreach (var arg in args)
         {
             var client = new Client(Guid.CreateVersion7(), arg.Name, arg.Address, Conditions.Work);
-            client.Append(data.Client);
-            clients.Add(client);
+            client.Create();
+            data.Client.Add(client);
+			clients.Add(client);
         }
 
         return clients;

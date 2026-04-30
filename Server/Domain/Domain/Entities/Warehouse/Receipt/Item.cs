@@ -67,8 +67,9 @@ public sealed class Item : BaseEntity
         foreach (var arg in args)
         {
             var item = new Item(Guid.CreateVersion7(), arg.ReceiptGuid, arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
-            item.Append(data.ReceiptItem);
-            items.Add(item);
+            item.Create();
+			data.ReceiptItem.Add(item);
+			items.Add(item);
         }
 
         await CreatedRange.Invoke(new CreatedRangeArg(items, data));

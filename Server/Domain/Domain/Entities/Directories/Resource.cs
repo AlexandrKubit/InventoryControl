@@ -46,8 +46,9 @@ public sealed class Resource : BaseEntity
         foreach (var name in names)
         {
             var resource = new Resource(Guid.CreateVersion7(), name, Conditions.Work);
-            resource.Append(data.Resource);
-            resources.Add(resource);
+            resource.Create();
+			data.Resource.Add(resource);
+			resources.Add(resource);
         }
 
         return resources;

@@ -60,8 +60,9 @@ public sealed class Balance : BaseEntity
             else
             {
                 balance = new Balance(Guid.CreateVersion7(), arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
-                balance.Append(data.Balance);
-            }
+                balance.Create();
+				data.Balance.Add(balance);
+			}
         }
     }
 

@@ -47,8 +47,9 @@ public sealed class MeasureUnit : BaseEntity
         foreach (var name in names)
         {
             var unit = new MeasureUnit(Guid.CreateVersion7(), name, Conditions.Work);
-            unit.Append(data.MeasureUnit);
-            units.Add(unit);
+            unit.Create();
+            data.MeasureUnit.Add(unit);
+			units.Add(unit);
         }
 
         return units;

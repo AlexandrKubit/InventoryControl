@@ -46,8 +46,9 @@ public sealed class Document : BaseEntity
         foreach (var arg in args)
         {
             var document = new Document(Guid.CreateVersion7(), arg.Number, arg.Date);
-            document.Append(data.Receipt);
-            documents.Add(document);
+            document.Create();
+            data.Receipt.Add(document);
+			documents.Add(document);
         }
 
         return documents;
