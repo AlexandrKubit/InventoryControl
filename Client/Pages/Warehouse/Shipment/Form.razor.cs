@@ -2,6 +2,7 @@ using Exchange.Queries.Warehouse.Shipment.Form;
 using Microsoft.AspNetCore.Components;
 using System.Net.Http.Json;
 using UI.Services;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace UI.Pages.Warehouse.Shipment;
 public partial class Form
@@ -67,7 +68,7 @@ public partial class Form
         var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Shipment.Save.Request, Guid>("/Warehouse/Shipment/Save", new Exchange.Commands.Warehouse.Shipment.Save.Request
         {
             Guid = Model.Document.Guid,
-            Date = Model.Document.Date,
+            Date = Model.Document.Date.ToDateTime(TimeOnly.MinValue),
             Number = Model.Document.Number,
             ClientGuid = Model.Document.ClientGuid,
             Items = Rows.Where(x => x.CurrentQuantity > 0).Select(x => new Exchange.Commands.Warehouse.Shipment.Save.Request.Item

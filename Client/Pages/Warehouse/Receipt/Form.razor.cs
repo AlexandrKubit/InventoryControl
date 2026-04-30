@@ -32,7 +32,7 @@ public partial class Form
         var result = await HttpService.GetDataAsync<Exchange.Commands.Warehouse.Receipt.Save.Request, Guid>("/Warehouse/Receipt/Save", new Exchange.Commands.Warehouse.Receipt.Save.Request
         {
             Guid = Model.Document.Guid,
-            Date = Model.Document.Date,
+            Date = Model.Document.Date.ToDateTime(TimeOnly.MinValue),
             Number = Model.Document.Number,
             Items = Model.Items.Select(x => new Exchange.Commands.Warehouse.Receipt.Save.Request.Item
             {

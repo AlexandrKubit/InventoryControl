@@ -10,7 +10,7 @@ public class Model
     {
         public Guid Guid { get; set; }
         public string Number { get; set; }
-        public DateTime Date { get; set; } = DateTime.Now;
+        public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Now);
     }
 
     public class Item
