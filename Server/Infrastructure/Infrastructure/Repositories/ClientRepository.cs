@@ -30,7 +30,7 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         var func = async (HashSet<string> args) =>
             await context.Clients
                 .Where(x => args.Contains(x.Name))
-                .Where(x => !LoadedGuids.Contains(x.Guid))
+                .Where(x => !LoadedGuids.Contains(x.Guid)) // загружаем только те, которых нет в словаре
                 .ToDictionaryAsync(x => x.Guid, x => Restore(x));
 
         await LoadWithCacheAsync(names, func);

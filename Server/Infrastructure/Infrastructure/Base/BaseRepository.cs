@@ -26,7 +26,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
         .Select(x=> x.Value)
         .Where(x => x.ModificationType != BaseEntity.ModificationTypes.Removed);
 
-    // для удобного использования в репозиториях
+    // для удобного использования в репозиториях, чтобы не загружать лишние сущности 
     protected HashSet<Guid> LoadedGuids => new(collection.Keys);
 
 
