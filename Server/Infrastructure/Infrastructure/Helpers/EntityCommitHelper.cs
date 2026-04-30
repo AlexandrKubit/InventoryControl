@@ -26,6 +26,7 @@ public static class EntityCommitHelper
         var modified = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Updated);
         foreach (var entity in modified)
         {
+            // такой подход позволяет использовать EF Core без change tracking
             // ВАЖНО: необходимо создать пустой объект, прикрепить его к контексту, а затем обновить нужные поля
             var dbEntity = new TEntityMap { Guid = entity.Guid };
             dbSet.Attach(dbEntity);        // "Прикрепляем" к контексту как существующий
