@@ -13,7 +13,7 @@ public static class ServiceCollectionExtensions
     public static void AddQueries(this WebApplicationBuilder builder)
     {
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-        Connection.SetCommectionString(connectionString);
+        Connection.SetConnectionString(connectionString);
     }
 
     public static void AddInfrastructure(this WebApplicationBuilder builder)

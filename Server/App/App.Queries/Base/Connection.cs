@@ -5,7 +5,7 @@ public static class Connection
 {
     private static string connectionString = "";
 
-    public static void SetCommectionString(string cs)
+    public static void SetConnectionString(string cs)
     {
         if (connectionString == "")
             connectionString = cs;
