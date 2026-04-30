@@ -14,6 +14,8 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         this.context = uow.Context;
     }
 
+    /// использует статический protected метод Restore, объявленный в Client.IRepository 
+    /// единственный способ восстановить сущность из БД, не нарушая её инкапсуляцию (конструктор приватный)
     private Client Restore(Entities.Client client)
     {
         return Client.IRepository.Restore(client.Guid, client.Name, client.Address, client.Condition);
@@ -65,9 +67,6 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
 
     /// <summary>
     /// Технический метод загрузки сущностей из БД по списку идентификаторов.
-    /// Возвращает доменные объекты, используя protected статический метод Restore,
-    /// объявленный в Client.IRepository. Это единственный способ восстановить сущность
-    /// из БД, не нарушая её инкапсуляцию (конструктор приватный).
     /// </summary>
     protected override async Task<Dictionary<Guid, Client>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
