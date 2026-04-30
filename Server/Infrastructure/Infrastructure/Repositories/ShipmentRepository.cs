@@ -14,18 +14,29 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
 
     private Context context { get; set; }
 
-    public async Task FillByClients(List<Guid> clientGuids)
+    private Document Restore(Entities.Shipment shipment) =>
+        Document.IRepository.Restore(shipment.Guid, shipment.Number, shipment.ClientGuid, shipment.Date, shipment.Condition);
+
+    public async Task EnsureByClients(HashSet<Guid> clientGuids)
     {
         var func = async (IEnumerable<Guid> args) =>
-            await context.Shipments.Where(x => args.Contains(x.ClientGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(clientGuids, func, this);
+            await context.Shipments
+                .Where(x => args.Contains(x.ClientGuid))
+				.Where(x => !LoadedGuids.Contains(x.Guid))
+				.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+		await LoadWithCacheAsync(clientGuids, func);
     }
 
-    public async Task FillByNumbers(List<string> numbers)
+    public async Task EnsureByNumbers(HashSet<string> numbers)
     {
         var func = async (IEnumerable<string> args) =>
-            await context.Shipments.Where(x => args.Contains(x.Number)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(numbers, func, this);
+            await context.Shipments
+                .Where(x => args.Contains(x.Number))
+				.Where(x => !LoadedGuids.Contains(x.Guid))
+				.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+		await LoadWithCacheAsync(numbers, func);
     }
 
 
@@ -33,7 +44,7 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Shipments,
-            entities: list,
+            entities: collection.Values,
             createMapDelegate: entity => new Entities.Shipment
             {
                 Guid = entity.Guid,
@@ -52,12 +63,10 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
         );
     }
 
-    protected override async Task<List<Document>> GetFromDbByGuidsAsync(List<Guid> guids)
+    protected override async Task<Dictionary<Guid,Document>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
-        return (await context.Shipments
-            .Where(x => guids.Contains(x.Guid))
-            .ToListAsync())      
-            .Select(x => Document.IRepository.Restore(x.Guid, x.Number, x.ClientGuid, x.Date, x.Condition))
-            .ToList();
-    }
+        return await context.Shipments
+			.Where(x => guids.Contains(x.Guid))
+			.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+	}
 }

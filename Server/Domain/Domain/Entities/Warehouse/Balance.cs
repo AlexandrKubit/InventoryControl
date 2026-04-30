@@ -15,9 +15,9 @@ public sealed class Balance : BaseEntity
         protected static Balance Restore(Guid guid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity)
             => new Balance(guid, resourceGuid, measureUnitGuid, quantity);
 
-        public Task FillByResourceMeasureUnit(IEnumerable<(Guid ResourceGuid, Guid MeasureUnitGuid)> args);
-        public Task FillByMeasureUnitGuids(List<Guid> unitGuids);
-        public Task FillByResourceGuids(List<Guid> resourceGuids);
+        public Task EnsureByResourceMeasureUnit(HashSet<(Guid ResourceGuid, Guid MeasureUnitGuid)> args);
+        public Task EnsureByMeasureUnitGuids(HashSet<Guid> unitGuids);
+        public Task EnsureByResourceGuids(HashSet<Guid> resourceGuids);
     }
 
     // подписываемся на события 
@@ -46,8 +46,8 @@ public sealed class Balance : BaseEntity
     public record AddRangeToStockArg(Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
     private static async Task AddRangeToStock(List<AddRangeToStockArg> args, IData data)
     {
-        var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToList();
-        await data.Balance.FillByResourceMeasureUnit(resourceMeasureUnits);
+        var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToHashSet();
+        await data.Balance.EnsureByResourceMeasureUnit(resourceMeasureUnits);
 
         foreach (var arg in args)
         {
@@ -68,8 +68,8 @@ public sealed class Balance : BaseEntity
     public record RemoveRangeFromStockArg(Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
     private static async Task RemoveRangeFromStock(List<RemoveRangeFromStockArg> args, IData data)
     {
-        var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToList();
-        await data.Balance.FillByResourceMeasureUnit(resourceMeasureUnits);
+        var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToHashSet();
+        await data.Balance.EnsureByResourceMeasureUnit(resourceMeasureUnits);
 
         foreach (var arg in args)
         {
@@ -158,9 +158,9 @@ public sealed class Balance : BaseEntity
 
     private static async Task OnShipmentDocumentSignedRangeHandler(Shipment.Document.SignedRangeArg arg)
     {
-        var guids = arg.Documents.Select(x => x.Guid).Distinct().ToList();
+        var guids = arg.Documents.Select(x => x.Guid).ToHashSet();
 
-        await arg.Data.ShipmentItem.FillByShipmentGuids(guids);
+        await arg.Data.ShipmentItem.EnsureByShipmentGuids(guids);
         var items = arg.Data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
         var removeRangeFromStockArgs = items
@@ -172,9 +172,9 @@ public sealed class Balance : BaseEntity
 
     private static async Task OnShipmentDocumentUnsignedRangeHandler(Shipment.Document.UnsignedRangeArg arg)
     {
-        var guids = arg.Documents.Select(x => x.Guid).Distinct().ToList();
+        var guids = arg.Documents.Select(x => x.Guid).ToHashSet();
 
-        await arg.Data.ShipmentItem.FillByShipmentGuids(guids);
+        await arg.Data.ShipmentItem.EnsureByShipmentGuids(guids);
         var items = arg.Data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
         var addRangeToStockArgs = items

@@ -12,10 +12,10 @@ internal class TestBalanceRepository : TestBaseRepository<Balance>, Balance.IRep
 
     // а это для юнит тестов
     public void Add(Guid guid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity) =>
-        list.Add(Balance.IRepository.Restore(guid, resourceGuid, measureUnitGuid, quantity));
+        collection.Add(guid, Balance.IRepository.Restore(guid, resourceGuid, measureUnitGuid, quantity));
 
-    public Task FillByResourceMeasureUnit(IEnumerable<(Guid ResourceGuid, Guid MeasureUnitGuid)> args) => Task.CompletedTask;
-    public Task FillByMeasureUnitGuids(List<Guid> unitGuids) => Task.CompletedTask;
-    public Task FillByResourceGuids(List<Guid> resourceGuids) => Task.CompletedTask;
-    public Task FillByGuids(List<Guid> guids) => Task.CompletedTask;
+    public Task EnsureByResourceMeasureUnit(HashSet<(Guid ResourceGuid, Guid MeasureUnitGuid)> args) => Task.CompletedTask;
+    public Task EnsureByMeasureUnitGuids(HashSet<Guid> unitGuids) => Task.CompletedTask;
+    public Task EnsureByResourceGuids(HashSet<Guid> resourceGuids) => Task.CompletedTask;
+    public Task EnsureByGuids(HashSet<Guid> guids) => Task.CompletedTask;
 }

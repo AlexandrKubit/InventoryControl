@@ -11,10 +11,10 @@ public sealed class Document : BaseEntity
 {
     public interface IRepository : IBaseRepository<Document>
     {
-        protected static Document Restore(Guid id, string name, DateTime date)
-            => new Document(id, name, date);
+        protected static Document Restore(Guid id, string number, DateTime date)
+            => new Document(id, number, date);
 
-        public Task FillByNumbers(List<string> numbers);
+        public Task EnsureByNumbers(HashSet<string> numbers);
     }
 
 
@@ -35,8 +35,8 @@ public sealed class Document : BaseEntity
     public record CreateArg(string Number, DateTime Date);
     public static async Task<List<Document>> CreateRange(List<CreateArg> args, IData data)
     {
-        var numbers = args.Select(x => x.Number).ToList();
-        await data.Receipt.FillByNumbers(numbers);
+        var numbers = args.Select(x => x.Number).ToHashSet();
+        await data.Receipt.EnsureByNumbers(numbers);
 
         if (data.Receipt.List.Any(x => numbers.Contains(x.Number)))
             throw new DomainException("В системе уже зарегистрирована накладная с таким номером");
@@ -56,11 +56,11 @@ public sealed class Document : BaseEntity
     public record UpdateArg(Guid Guid, string Number, DateTime Date);
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        var guids = args.Select(x => x.Guid).Distinct().ToList();
-        await data.Receipt.FillByGuids(guids);
+        var guids = args.Select(x => x.Guid).ToHashSet();
+        await data.Receipt.EnsureByGuids(guids);
 
-        var numbers = args.Select(x => x.Number).Distinct().ToList();
-        await data.Receipt.FillByNumbers(numbers);
+        var numbers = args.Select(x => x.Number).ToHashSet();
+        await data.Receipt.EnsureByNumbers(numbers);
 
         var receipts = data.Receipt.List.Where(x => guids.Contains(x.Guid)).ToList();
 
@@ -84,15 +84,15 @@ public sealed class Document : BaseEntity
     // иначе данные будут в невалидном состоянии
     // на этом примере можно увидеть разницу между бизнес действием и сценарием
     // при том, что удаление ресурса из накладной тоже отдельное бизнесс действие
-    public static async Task DeleteRange(List<Guid> receiptGuids, IData data)
+    public static async Task DeleteRange(HashSet<Guid> receiptGuids, IData data)
     {
-        await data.Receipt.FillByGuids(receiptGuids);
-        await data.ReceiptItem.FillByReceiptGuids(receiptGuids);
+        await data.Receipt.EnsureByGuids(receiptGuids);
+        await data.ReceiptItem.EnsureByReceiptGuids(receiptGuids);
 
         var itemGuids = data.ReceiptItem.List
             .Where(x => receiptGuids.Contains(x.ReceiptGuid))
             .Select(x=> x.Guid)
-            .ToList();
+            .ToHashSet();
 
         await Item.DeleteRange(itemGuids, data);
 

@@ -11,7 +11,7 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request)
     {
-        await data.MeasureUnit.FillByGuids([request.Guid]);
+        await data.MeasureUnit.EnsureByGuids([request.Guid]);
         var unit = data.MeasureUnit.List.FirstOrDefault(x => x.Guid == request.Guid);
 
         if (unit.Condition == MeasureUnit.Conditions.Work)

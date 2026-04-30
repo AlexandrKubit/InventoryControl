@@ -14,32 +14,47 @@ internal class ReceiptItemRepository : BaseRepository<Item>, Item.IRepository
 
     private Context context { get; set; }
 
-    public async Task FillByMeasureUnitGuids(List<Guid> unitGuids)
+    private Item Restore(Entities.ReceiptItem item) =>
+        Item.IRepository.Restore(item.Guid, item.ReceiptGuid, item.ResourceGuid, item.MeasureUnitGuid, item.Quantity);
+
+    public async Task EnsureByMeasureUnitGuids(HashSet<Guid> unitGuids)
     {
         var func = async (IEnumerable<Guid> guids) => 
-            await context.ReceiptItems.Where(x => guids.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(unitGuids, func, this);
+            await context.ReceiptItems
+                .Where(x => guids.Contains(x.MeasureUnitGuid))
+				.Where(x => !LoadedGuids.Contains(x.Guid))
+				.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+		await LoadWithCacheAsync(unitGuids, func);
     }
 
-    public async Task FillByReceiptGuids(List<Guid> receiptGuids)
+    public async Task EnsureByReceiptGuids(HashSet<Guid> receiptGuids)
     {
         var func = async (IEnumerable<Guid> guids) => 
-            await context.ReceiptItems.Where(x => guids.Contains(x.ReceiptGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(receiptGuids, func, this);
+            await context.ReceiptItems
+                .Where(x => guids.Contains(x.ReceiptGuid))
+				.Where(x => !LoadedGuids.Contains(x.Guid))
+				.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+		await LoadWithCacheAsync(receiptGuids, func);
     }
 
-    public async Task FillByResourceGuids(List<Guid> resourceGuids)
+    public async Task EnsureByResourceGuids(HashSet<Guid> resourceGuids)
     {
         var func = async (IEnumerable<Guid> guids) => 
-            await context.ReceiptItems.Where(x => guids.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(resourceGuids, func, this);
+            await context.ReceiptItems
+                .Where(x => guids.Contains(x.ResourceGuid))
+				.Where(x => !LoadedGuids.Contains(x.Guid))
+				.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+		await LoadWithCacheAsync(resourceGuids, func);
     }
 
     public override void Commit()
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.ReceiptItems,
-            entities: list,
+            entities: collection.Values,
             createMapDelegate: entity => new Entities.ReceiptItem
             {
                 Guid = entity.Guid,
@@ -58,12 +73,10 @@ internal class ReceiptItemRepository : BaseRepository<Item>, Item.IRepository
         );
     }
 
-    protected override async Task<List<Item>> GetFromDbByGuidsAsync(List<Guid> guids)
+    protected override async Task<Dictionary<Guid, Item>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
-        return (await context.ReceiptItems
-            .Where(x => guids.Contains(x.Guid))
-            .ToListAsync())     
-            .Select(x => Item.IRepository.Restore(x.Guid, x.ReceiptGuid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
-    }
+        return await context.ReceiptItems
+			.Where(x => guids.Contains(x.Guid))
+			.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+	}
 }

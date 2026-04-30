@@ -14,9 +14,9 @@ public sealed class Item : BaseEntity
         protected static Item Restore(Guid guid, Guid shipmentGuid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity)
             => new Item(guid, shipmentGuid, resourceGuid, measureUnitGuid, quantity);
 
-        public abstract Task FillByMeasureUnitGuids(List<Guid> unitGuids);
-        public abstract Task FillByResourceGuids(List<Guid> resourceGuids);
-        public abstract Task FillByShipmentGuids(List<Guid> shipmentGuids);
+        public abstract Task EnsureByMeasureUnitGuids(HashSet<Guid> unitGuids);
+        public abstract Task EnsureByResourceGuids(HashSet<Guid> resourceGuids);
+        public abstract Task EnsureByShipmentGuids(HashSet<Guid> shipmentGuids);
     }
 
     public Guid ShipmentGuid { get; }
@@ -34,15 +34,15 @@ public sealed class Item : BaseEntity
     }
 
     public record CreateArg(Guid ShipmentGuid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
-    public static async Task<List<Item>> CreateRange(List<CreateArg> args, IData data)
+    public static async Task<HashSet<Item>> CreateRange(List<CreateArg> args, IData data)
     {
-        var shipmentGuids = args.Select(x => x.ShipmentGuid).Distinct().ToList();
-        await data.Shipment.FillByGuids(shipmentGuids);
+        var shipmentGuids = args.Select(x => x.ShipmentGuid).ToHashSet();
+        await data.Shipment.EnsureByGuids(shipmentGuids);
 
         if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно добавить ресурс в подписанную отгрузку");
 
-        List<Item> items = new List<Item>();
+        HashSet<Item> items = new HashSet<Item>();
 
         foreach (var arg in args)
         {
@@ -57,12 +57,12 @@ public sealed class Item : BaseEntity
     public record UpdateArg(Guid Guid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        var guids = args.Select(x => x.Guid).Distinct().ToList();
-        await data.ShipmentItem.FillByGuids(guids);
+        var guids = args.Select(x => x.Guid).ToHashSet();
+        await data.ShipmentItem.EnsureByGuids(guids);
         var items = data.ShipmentItem.List.Where(x => guids.Contains(x.Guid)).ToList();
 
-        var shipmentGuids = items.Select(x => x.ShipmentGuid).Distinct().ToList();
-        await data.Shipment.FillByGuids(shipmentGuids);
+        var shipmentGuids = items.Select(x => x.ShipmentGuid).ToHashSet();
+        await data.Shipment.EnsureByGuids(shipmentGuids);
 
         if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно изменить ресурс в подписанной отгрузке");
@@ -78,13 +78,13 @@ public sealed class Item : BaseEntity
         }
     }
 
-    public static async Task DeleteRange(List<Guid> guids, IData data)
+    public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ShipmentItem.FillByGuids(guids);
+        await data.ShipmentItem.EnsureByGuids(guids);
         var items = data.ShipmentItem.List.Where(x => guids.Contains(x.Guid)).ToList();
 
-        var shipmentGuids = items.Select(x => x.ShipmentGuid).Distinct().ToList();
-        await data.Shipment.FillByGuids(shipmentGuids);
+        var shipmentGuids = items.Select(x => x.ShipmentGuid).ToHashSet();
+        await data.Shipment.EnsureByGuids(shipmentGuids);
 
         if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно удалить ресурс из подписанной отгрузки");
@@ -92,7 +92,7 @@ public sealed class Item : BaseEntity
         foreach (var item in items)
             item.Remove();
         
-        await data.ShipmentItem.FillByShipmentGuids(shipmentGuids);
+        await data.ShipmentItem.EnsureByShipmentGuids(shipmentGuids);
 
         foreach (var sg in shipmentGuids)
         {

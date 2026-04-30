@@ -16,28 +16,29 @@ public static class EntityCommitHelper
         Func<TEntity, TEntityMap> createMapDelegate,
         Action<TEntityMap, TEntity> updateMapDelegate)
         where TEntity : BaseEntity
-        where TEntityMap : class, IGuidIdentity
-    {      
-        // Добавление новых
+        where TEntityMap : class, IGuidIdentity, new()
+    {
+        // 1. Добавление новых
         var created = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Created);
         dbSet.AddRange(created.Select(createMapDelegate));
 
-        // Обновление существующих
+        // 2. Обновление существующих через Attach
         var modified = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Updated);
-        var modifiedIds = modified.Select(x => x.Guid).ToList();
-        var inDb = dbSet.Local.Where(x => modifiedIds.Contains(x.Guid)).ToList();
-
-        foreach (var dbEntity in inDb)
+        foreach (var entity in modified)
         {
-            var entity = modified.First(x => x.Guid == dbEntity.Guid);
-            updateMapDelegate(dbEntity, entity);
+            // ВАЖНО: необходимо создать пустой объект, прикрепить его к контексту, а затем обновить нужные поля
+            var dbEntity = new TEntityMap { Guid = entity.Guid };
+            dbSet.Attach(dbEntity);        // "Прикрепляем" к контексту как существующий
+            updateMapDelegate(dbEntity, entity); // Применяем изменения из домена
         }
 
-        // Удаление сущностей
+        // 3. Удаление существующих через Attach и Remove
         var deleted = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Removed);
-        var deletedIds = deleted.Select(x => x.Guid).ToList();
-        var toDelete = dbSet.Where(x => deletedIds.Contains(x.Guid));
-
-        dbSet.RemoveRange(toDelete);
+        foreach (var entity in deleted)
+        {
+            var dbEntity = createMapDelegate(entity);
+            dbSet.Attach(dbEntity); // Прикрепляем как существующий
+            dbSet.Remove(dbEntity); // Помечаем на удаление
+        }
     }
 }

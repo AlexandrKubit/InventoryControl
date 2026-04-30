@@ -15,19 +15,24 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
 
     private Context context { get; set; }
 
-
-    public async Task FillByNames(List<string> names)
+    private Resource Restore(Entities.Resource resource) =>
+        Resource.IRepository.Restore(resource.Guid, resource.Name, resource.Condition);
+    public async Task EnsureByNames(HashSet<string> names)
     {
         var func = async (IEnumerable<string> args) =>
-            await context.Resources.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(names, func, this);
+            await context.Resources
+                .Where(x => args.Contains(x.Name))
+				.Where(x => !LoadedGuids.Contains(x.Guid))
+				.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+		await LoadWithCacheAsync(names, func);
     }
 
     public override void Commit()
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Resources,
-            entities: list,
+            entities: collection.Values,
             createMapDelegate: entity => new Entities.Resource
             {
                 Guid = entity.Guid,
@@ -42,12 +47,10 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
         );
     }
 
-    protected override async Task<List<Resource>> GetFromDbByGuidsAsync(List<Guid> guids)
+    protected override async Task<Dictionary<Guid,Resource>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
-        return (await context.Resources
-            .Where(x => guids.Contains(x.Guid))
-            .ToListAsync())
-            .Select(x => Resource.IRepository.Restore(x.Guid, x.Name, x.Condition))
-            .ToList();
-    }
+        return await context.Resources
+			.Where(x => guids.Contains(x.Guid))
+			.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+	}
 }

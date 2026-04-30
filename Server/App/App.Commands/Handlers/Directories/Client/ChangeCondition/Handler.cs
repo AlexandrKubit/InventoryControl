@@ -11,7 +11,7 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request)
     {
-        await data.Client.FillByGuids([request.Guid]);
+        await data.Client.EnsureByGuids([request.Guid]);
         var client = data.Client.List.FirstOrDefault(x => x.Guid == request.Guid);
 
         if (client.Condition == Client.Conditions.Work)

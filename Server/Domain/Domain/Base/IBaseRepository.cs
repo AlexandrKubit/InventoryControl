@@ -9,8 +9,8 @@ public interface IBaseRepository<TEntity> where TEntity : BaseEntity
     public IEnumerable<TEntity> List { get; }
     public void Add(TEntity entity);
 
-    // этот метод и другие FillBy... стоит воспринимать как декларацию потребности
+    // этот метод и другие EnsureBy... стоит воспринимать как декларацию потребности
     // другими словами "будь готов отвечать на вопросы об этих данных" или "убедись, что эти данные находятся в коллекции"
     // это контракт, который гарантирует домену: "Когда тебе понадобятся данные по определённым критериям, они будут здесь, как будто были всегда".
-    public Task FillByGuids(List<Guid> guids);
+    public Task EnsureByGuids(HashSet<Guid> guids);
 }

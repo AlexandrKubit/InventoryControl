@@ -15,7 +15,7 @@ public sealed class Client : BaseEntity
         protected static Client Restore(Guid guid, string name, string address, Conditions condition)
             => new(guid, name, address, condition);
 
-        public Task FillByNames(List<string> names);
+        public Task EnsureByNames(HashSet<string> names);
     }
 
 
@@ -43,8 +43,8 @@ public sealed class Client : BaseEntity
     public record CreateArg(string Name, string Address);
     public static async Task<List<Client>> CreateRange(List<CreateArg> args, IData data)
     {
-        var names = args.Select(x => x.Name).ToList();
-        await data.Client.FillByNames(names);
+        var names = args.Select(x => x.Name).ToHashSet();
+        await data.Client.EnsureByNames(names);
 
         if (data.Client.List.Any(x => names.Contains(x.Name)))
             throw new DomainException("В системе уже зарегистрирован клиент с таким наименованием");
@@ -64,11 +64,11 @@ public sealed class Client : BaseEntity
     public record UpdateArg(Guid Guid, string Name, string Address);
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        var guids = args.Select(x => x.Guid).Distinct().ToList();
-        await data.Client.FillByGuids(guids);
+        var guids = args.Select(x => x.Guid).ToHashSet();
+        await data.Client.EnsureByGuids(guids);
 
-        var names = args.Select(x => x.Name).Distinct().ToList();
-        await data.Client.FillByNames(names);
+        var names = args.Select(x => x.Name).ToHashSet();
+        await data.Client.EnsureByNames(names);
 
         var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
 
@@ -88,24 +88,24 @@ public sealed class Client : BaseEntity
         }
     }
 
-    public static async Task DeleteRange(List<Guid> guids, IData data)
+    public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.Shipment.FillByClients(guids);
+        await data.Shipment.EnsureByClients(guids);
         var shipments = data.Shipment.List.Where(x => guids.Contains(x.ClientGuid));
 
         if (shipments.Any())
             throw new DomainException("Невозможно удалить клиента, т.к. в системе существует отгрузка, использующая его");
 
-        await data.Client.FillByGuids(guids);
+        await data.Client.EnsureByGuids(guids);
         var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var client in clients)
             client.Remove();
     }
 
-    public static async Task ToArchiveRange(List<Guid> guids, IData data)
+    public static async Task ToArchiveRange(HashSet<Guid> guids, IData data)
     {
-        await data.Client.FillByGuids(guids);
+        await data.Client.EnsureByGuids(guids);
         var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var client in clients)
@@ -120,9 +120,9 @@ public sealed class Client : BaseEntity
         }
     }
 
-    public static async Task ToWorkRange(List<Guid> guids, IData data)
+    public static async Task ToWorkRange(HashSet<Guid> guids, IData data)
     {
-        await data.Client.FillByGuids(guids);
+        await data.Client.EnsureByGuids(guids);
         var clients = data.Client.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var client in clients)

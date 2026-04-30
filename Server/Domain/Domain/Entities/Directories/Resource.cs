@@ -15,7 +15,7 @@ public sealed class Resource : BaseEntity
         protected static Resource Restore(Guid guid, string name, Conditions condition)
             => new Resource(guid, name, condition);
 
-        public Task FillByNames(List<string> names);
+        public Task EnsureByNames(HashSet<string> names);
     }
 
     public string Name { get; private set; }
@@ -34,9 +34,9 @@ public sealed class Resource : BaseEntity
         Condition = condition;
     }
 
-    public static async Task<List<Resource>> CreateRange(List<string> names, IData data)
+    public static async Task<List<Resource>> CreateRange(HashSet<string> names, IData data)
     {
-        await data.Resource.FillByNames(names);
+        await data.Resource.EnsureByNames(names);
 
         if (data.Resource.List.Any(x => names.Contains(x.Name)))
             throw new DomainException("В системе уже зарегистрирован ресурс с таким наименованием");
@@ -56,11 +56,11 @@ public sealed class Resource : BaseEntity
     public record UpdateArg(Guid Guid, string Name);
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        var guids = args.Select(x => x.Guid).Distinct().ToList();
-        await data.Resource.FillByGuids(guids);
+        var guids = args.Select(x => x.Guid).ToHashSet();
+        await data.Resource.EnsureByGuids(guids);
 
-        var names = args.Select(x => x.Name).Distinct().ToList();
-        await data.Resource.FillByNames(names);
+        var names = args.Select(x => x.Name).ToHashSet();
+        await data.Resource.EnsureByNames(names);
 
         var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
 
@@ -79,11 +79,11 @@ public sealed class Resource : BaseEntity
         }
     }
 
-    public static async Task DeleteRange(List<Guid> guids, IData data)
+    public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ReceiptItem.FillByResourceGuids(guids);
-        await data.Balance.FillByResourceGuids(guids);
-        await data.ShipmentItem.FillByResourceGuids(guids);
+        await data.ReceiptItem.EnsureByResourceGuids(guids);
+        await data.Balance.EnsureByResourceGuids(guids);
+        await data.ShipmentItem.EnsureByResourceGuids(guids);
 
         var receiptItems = data.ReceiptItem.List.Where(x => guids.Contains(x.ResourceGuid));
         var balances = data.Balance.List.Where(x => guids.Contains(x.ResourceGuid));
@@ -92,16 +92,16 @@ public sealed class Resource : BaseEntity
         if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
             throw new DomainException("Невозможно удалить ресурс, так как он используется");
 
-        await data.Resource.FillByGuids(guids);
+        await data.Resource.EnsureByGuids(guids);
         var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)
             resource.Remove();
     }
 
-    public static async Task ToArchiveRange(List<Guid> guids, IData data)
+    public static async Task ToArchiveRange(HashSet<Guid> guids, IData data)
     {
-        await data.Resource.FillByGuids(guids);
+        await data.Resource.EnsureByGuids(guids);
         var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)
@@ -116,9 +116,9 @@ public sealed class Resource : BaseEntity
         }
     }
 
-    public static async Task ToWorkRange(List<Guid> guids, IData data)
+    public static async Task ToWorkRange(HashSet<Guid> guids, IData data)
     {
-        await data.Resource.FillByGuids(guids);
+        await data.Resource.EnsureByGuids(guids);
         var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)

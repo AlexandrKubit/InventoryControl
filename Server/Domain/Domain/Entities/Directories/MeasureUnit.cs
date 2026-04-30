@@ -15,7 +15,7 @@ public sealed class MeasureUnit : BaseEntity
         protected static MeasureUnit Restore(Guid id, string name, Conditions condition)
             => new MeasureUnit(id, name, condition);
 
-        public Task FillByNames(List<string> names);
+        public Task EnsureByNames(HashSet<string> names);
     }
 
 
@@ -35,9 +35,9 @@ public sealed class MeasureUnit : BaseEntity
         Condition = condition;
     }
 
-    public static async Task<List<MeasureUnit>> CreateRange(List<string> names, IData data)
+    public static async Task<List<MeasureUnit>> CreateRange(HashSet<string> names, IData data)
     {
-        await data.MeasureUnit.FillByNames(names);
+        await data.MeasureUnit.EnsureByNames(names);
 
         if (data.MeasureUnit.List.Any(x => names.Contains(x.Name)))
             throw new DomainException("В системе уже зарегистрирована единица измерения с таким наименованием");
@@ -57,11 +57,11 @@ public sealed class MeasureUnit : BaseEntity
     public record UpdateArg(Guid Guid, string Name);
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        var guids = args.Select(x => x.Guid).Distinct().ToList();
-        await data.MeasureUnit.FillByGuids(guids);
+        var guids = args.Select(x => x.Guid).ToHashSet();
+        await data.MeasureUnit.EnsureByGuids(guids);
 
-        var names = args.Select(x => x.Name).Distinct().ToList();
-        await data.MeasureUnit.FillByNames(names);
+        var names = args.Select(x => x.Name).ToHashSet();
+        await data.MeasureUnit.EnsureByNames(names);
 
         var units = data.MeasureUnit.List.Where(x => guids.Contains(x.Guid)).ToList();
 
@@ -80,11 +80,11 @@ public sealed class MeasureUnit : BaseEntity
         }
     }
 
-    public static async Task DeleteRange(List<Guid> guids, IData data)
+    public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ReceiptItem.FillByMeasureUnitGuids(guids);
-        await data.Balance.FillByMeasureUnitGuids(guids);
-        await data.ShipmentItem.FillByMeasureUnitGuids(guids);
+        await data.ReceiptItem.EnsureByMeasureUnitGuids(guids);
+        await data.Balance.EnsureByMeasureUnitGuids(guids);
+        await data.ShipmentItem.EnsureByMeasureUnitGuids(guids);
 
         var receiptItems = data.ReceiptItem.List.Where(x => guids.Contains(x.MeasureUnitGuid));
         var balances = data.Balance.List.Where(x => guids.Contains(x.MeasureUnitGuid));
@@ -93,16 +93,16 @@ public sealed class MeasureUnit : BaseEntity
         if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
             throw new DomainException("Невозможно удалить единицу измерения, так как она используется");
 
-        await data.MeasureUnit.FillByGuids(guids);
+        await data.MeasureUnit.EnsureByGuids(guids);
         var units = data.MeasureUnit.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var unit in units)
             unit.Remove();
     }
 
-    public static async Task ToArchiveRange(List<Guid> guids, IData data)
+    public static async Task ToArchiveRange(HashSet<Guid> guids, IData data)
     {
-        await data.MeasureUnit.FillByGuids(guids);
+        await data.MeasureUnit.EnsureByGuids(guids);
         var units = data.MeasureUnit.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var unit in units)
@@ -117,9 +117,9 @@ public sealed class MeasureUnit : BaseEntity
         }
     }
 
-    public static async Task ToWorkRange(List<Guid> guids, IData data)
+    public static async Task ToWorkRange(HashSet<Guid> guids, IData data)
     {
-        await data.MeasureUnit.FillByGuids(guids);
+        await data.MeasureUnit.EnsureByGuids(guids);
         var units = data.MeasureUnit.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var unit in units)

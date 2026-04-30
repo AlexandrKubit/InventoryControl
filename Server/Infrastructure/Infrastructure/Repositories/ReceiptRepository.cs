@@ -13,13 +13,19 @@ internal class ReceiptRepository : BaseRepository<Document>, Document.IRepositor
     }
 
     private Context context { get; set; }
-    
 
-    public async Task FillByNumbers(List<string> numbers)
+    private Document Restore(Entities.Receipt receipt) =>
+        Document.IRepository.Restore(receipt.Guid, receipt.Number, receipt.Date);
+
+    public async Task EnsureByNumbers(HashSet<string> numbers)
     {
         var func = async (IEnumerable<string> args) =>
-             await context.Receipts.Where(x => args.Contains(x.Number)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(numbers, func, this);
+             await context.Receipts
+                 .Where(x => args.Contains(x.Number))
+                 .Where(x => !LoadedGuids.Contains(x.Guid))
+                 .ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+        await LoadWithCacheAsync(numbers, func);
     }
 
 
@@ -27,7 +33,7 @@ internal class ReceiptRepository : BaseRepository<Document>, Document.IRepositor
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Receipts,
-            entities: list,
+            entities: collection.Values,
             createMapDelegate: entity => new Entities.Receipt
             {
                 Guid = entity.Guid,
@@ -42,12 +48,10 @@ internal class ReceiptRepository : BaseRepository<Document>, Document.IRepositor
         );
     }
 
-    protected override async Task<List<Document>> GetFromDbByGuidsAsync(List<Guid> guids)
+    protected override async Task<Dictionary<Guid,Document>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
-        return (await context.Receipts
+        return await context.Receipts
             .Where(x => guids.Contains(x.Guid))
-            .ToListAsync())     
-            .Select(x => Document.IRepository.Restore(x.Guid, x.Number, x.Date))
-            .ToList();
+            .ToDictionaryAsync(x => x.Guid, x => Restore(x));
     }
 }

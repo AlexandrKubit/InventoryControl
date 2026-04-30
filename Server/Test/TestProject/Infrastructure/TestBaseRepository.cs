@@ -3,14 +3,15 @@
 namespace TestProject.Infrastructure;
 public abstract class TestBaseRepository<TEntity> where TEntity : BaseEntity
 {
-    public IEnumerable<TEntity> List => list.Where(x => x.ModificationType != BaseEntity.ModificationTypes.Removed);
-    protected List<TEntity> list = new();
+    protected Dictionary<Guid, TEntity> collection = new();
+    public IEnumerable<TEntity> List => collection
+        .Select(x => x.Value)
+        .Where(x => x.ModificationType != BaseEntity.ModificationTypes.Removed);
+
     public void Add(TEntity entity)
     {
-        if (entity.ModificationType == BaseEntity.ModificationTypes.Created && !list.Any(e => e.Guid == entity.Guid))
-        {
-            list.Add(entity);
-        }
+        if (entity.ModificationType == BaseEntity.ModificationTypes.Created)
+            collection.Add(entity.Guid, entity);
     }
 
     public abstract void InitData();

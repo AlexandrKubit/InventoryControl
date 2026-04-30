@@ -24,11 +24,11 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
         {
             await Document.UpdateRange([new Document.UpdateArg(request.Guid, request.Number, request.ClientGuid, request.Date)], data);
 
-            await data.ShipmentItem.FillByShipmentGuids([request.Guid]);
+            await data.ShipmentItem.EnsureByShipmentGuids([request.Guid]);
             var items = data.ShipmentItem.List.Where(x => x.ShipmentGuid == request.Guid).ToList();
 
             // delete
-            var deletedItemsGuids = items.Select(x => x.Guid).Except(request.Items.Select(x => x.Guid)).ToList();
+            var deletedItemsGuids = items.Select(x => x.Guid).Except(request.Items.Select(x => x.Guid)).ToHashSet();
             await Item.DeleteRange(deletedItemsGuids, data);
 
             // create

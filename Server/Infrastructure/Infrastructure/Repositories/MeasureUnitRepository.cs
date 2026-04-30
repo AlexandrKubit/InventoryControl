@@ -14,19 +14,25 @@ internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.
 
     private Context context { get; set; }
 
+    private MeasureUnit Restore(Entities.MeasureUnit unit) =>
+        MeasureUnit.IRepository.Restore(unit.Guid, unit.Name, unit.Condition);
 
-    public async Task FillByNames(List<string> names)
+    public async Task EnsureByNames(HashSet<string> names)
     {
         var func = async (IEnumerable<string> args) =>
-            await context.MeasureUnits.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(names, func, this);
+            await context.MeasureUnits
+                .Where(x => args.Contains(x.Name))
+				.Where(x => !LoadedGuids.Contains(x.Guid))
+				.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+		await LoadWithCacheAsync(names, func);
     }
 
     public override void Commit()
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.MeasureUnits,
-            entities: list,
+            entities: collection.Values,
             createMapDelegate: entity => new Entities.MeasureUnit
             {
                 Guid = entity.Guid,
@@ -41,12 +47,10 @@ internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.
         );
     }
 
-    protected override async Task<List<MeasureUnit>> GetFromDbByGuidsAsync(List<Guid> guids)
+    protected override async Task<Dictionary<Guid, MeasureUnit>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
-        return (await context.MeasureUnits
-            .Where(x => guids.Contains(x.Guid))
-            .ToListAsync())
-            .Select(x => MeasureUnit.IRepository.Restore(x.Guid, x.Name, x.Condition))
-            .ToList();
-    }
+        return await context.MeasureUnits
+			.Where(x => guids.Contains(x.Guid))
+			.ToDictionaryAsync(x => x.Guid, x => Restore(x));
+	}
 }

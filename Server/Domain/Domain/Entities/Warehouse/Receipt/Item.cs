@@ -15,9 +15,9 @@ public sealed class Item : BaseEntity
         protected static Item Restore(Guid guid, Guid receiptGuid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity)
             => new Item(guid, receiptGuid, resourceGuid, measureUnitGuid, quantity);
 
-        public abstract Task FillByMeasureUnitGuids(List<Guid> unitGuids);
-        public abstract Task FillByResourceGuids(List<Guid> resourceGuids);
-        public abstract Task FillByReceiptGuids(List<Guid> receiptGuids);
+        public abstract Task EnsureByMeasureUnitGuids(HashSet<Guid> unitGuids);
+        public abstract Task EnsureByResourceGuids(HashSet<Guid> resourceGuids);
+        public abstract Task EnsureByReceiptGuids(HashSet<Guid> receiptGuids);
     }
 
 
@@ -78,8 +78,8 @@ public sealed class Item : BaseEntity
     public record UpdateArg(Guid Guid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
-        var guids = args.Select(x => x.Guid).Distinct().ToList();
-        await data.ReceiptItem.FillByGuids(guids);
+        var guids = args.Select(x => x.Guid).ToHashSet();
+        await data.ReceiptItem.EnsureByGuids(guids);
         var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         List<(ItemData Old, ItemData New)> сhanges = [];
@@ -102,9 +102,9 @@ public sealed class Item : BaseEntity
     }
 
 
-    public static async Task DeleteRange(List<Guid> guids, IData data)
+    public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ReceiptItem.FillByGuids(guids);
+        await data.ReceiptItem.EnsureByGuids(guids);
         var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var item in items)

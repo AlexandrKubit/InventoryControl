@@ -14,18 +14,26 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
         this.context = uow.Context;
     }
 
+    private Client Restore(Entities.Client client)
+    {
+        return Client.IRepository.Restore(client.Guid, client.Name, client.Address, client.Condition);
+    }
+
     /// <summary>
     /// Декларативная загрузка: домен запрашивает данные по именам.
     /// Метод использует универсальный кэширующий механизм LoadWithCacheAsync,
     /// который гарантирует, что каждый уникальный набор аргументов будет загружен из БД только один раз
     /// в рамках жизненного цикла репозитория (и, соответственно, UoW).
     /// </summary>
-    public async Task FillByNames(List<string> names)
+    public async Task EnsureByNames(HashSet<string> names)
     {
-        var func = async (IEnumerable<string> args) =>
-            await context.Clients.Where(x => args.Contains(x.Name)).Select(x => x.Guid).ToListAsync();
+        var func = async (HashSet<string> args) =>
+            await context.Clients
+                .Where(x => args.Contains(x.Name))
+                .Where(x => !LoadedGuids.Contains(x.Guid))
+                .ToDictionaryAsync(x => x.Guid, x => Restore(x));
 
-        await LoadWithCacheAsync(names, func, this);
+        await LoadWithCacheAsync(names, func);
     }
 
     /// <summary>
@@ -38,7 +46,7 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Clients,
-            entities: list,
+            entities: collection.Values,
             createMapDelegate: entity => new Entities.Client
             {
                 Guid = entity.Guid,
@@ -61,12 +69,10 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
     /// объявленный в Client.IRepository. Это единственный способ восстановить сущность
     /// из БД, не нарушая её инкапсуляцию (конструктор приватный).
     /// </summary>
-    protected override async Task<List<Client>> GetFromDbByGuidsAsync(List<Guid> guids)
+    protected override async Task<Dictionary<Guid, Client>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
-        return (await context.Clients
+        return await context.Clients
             .Where(x => guids.Contains(x.Guid))
-            .ToListAsync())
-            .Select(x => Client.IRepository.Restore(x.Guid, x.Name, x.Address, x.Condition))
-            .ToList();
+            .ToDictionaryAsync(x => x.Guid, x => Restore(x));
     }
 }

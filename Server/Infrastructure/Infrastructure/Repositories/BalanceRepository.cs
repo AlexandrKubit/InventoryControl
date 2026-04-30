@@ -1,6 +1,5 @@
 ﻿namespace Infrastructure.Repositories;
 
-using App.Base.Mediator;
 using Domain.Entities.Warehouse;
 using Infrastructure.Base;
 using Infrastructure.Helpers;
@@ -15,38 +14,52 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
 
     private Context context { get; set; }
 
-    public async Task FillByMeasureUnitGuids(List<Guid> unitGuids)
+    private Balance Restore(Entities.Balance balance)
     {
-        var func = async (IEnumerable<Guid> guids) =>
-            await context.Balances.Where(x => guids.Contains(x.MeasureUnitGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(unitGuids, func, this);
+        return Balance.IRepository.Restore(balance.Guid, balance.ResourceGuid, balance.MeasureUnitGuid, balance.Quantity);
     }
 
-    public async Task FillByResourceGuids(List<Guid> resourceGuids)
+
+    public async Task EnsureByMeasureUnitGuids(HashSet<Guid> unitGuids)
     {
-        var func = async (IEnumerable<Guid> guids) =>
-             await context.Balances.Where(x => guids.Contains(x.ResourceGuid)).Select(x => x.Guid).ToListAsync();
-        await LoadWithCacheAsync(resourceGuids, func, this);
+        var func = async (HashSet<Guid> guids) =>
+            await context.Balances
+                .Where(x => guids.Contains(x.MeasureUnitGuid))
+                .Where(x => !LoadedGuids.Contains(x.Guid))
+                .ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+        await LoadWithCacheAsync(unitGuids, func);
     }
 
-    public async Task FillByResourceMeasureUnit(IEnumerable<(Guid ResourceGuid, Guid MeasureUnitGuid)> args)
+    public async Task EnsureByResourceGuids(HashSet<Guid> resourceGuids)
     {
-        var compositeKeys = args.Select(a => $"{a.ResourceGuid}:{a.MeasureUnitGuid}").ToList();
+        var func = async (HashSet<Guid> guids) =>
+             await context.Balances
+                .Where(x => guids.Contains(x.ResourceGuid))
+                .Where(x => !LoadedGuids.Contains(x.Guid))
+                .ToDictionaryAsync(x => x.Guid, x => Restore(x));
+
+        await LoadWithCacheAsync(resourceGuids, func);
+    }
+
+    public async Task EnsureByResourceMeasureUnit(HashSet<(Guid ResourceGuid, Guid MeasureUnitGuid)> args)
+    {
+        var compositeKeys = args.Select(a => $"{a.ResourceGuid}:{a.MeasureUnitGuid}").ToHashSet();
 
         var func = async (IEnumerable<string> args) =>
             await context.Balances
-            .Where(b => args.Contains(b.ResourceGuid.ToString() + ":" + b.MeasureUnitGuid.ToString()))
-            .Select(b => b.Guid)
-            .ToListAsync();
+                .Where(x => args.Contains(x.ResourceGuid.ToString() + ":" + x.MeasureUnitGuid.ToString()))
+                .Where(x => !LoadedGuids.Contains(x.Guid))
+                .ToDictionaryAsync(x => x.Guid, x => Restore(x));
 
-        await LoadWithCacheAsync(compositeKeys, func, this);
+        await LoadWithCacheAsync(compositeKeys, func);
     }
 
     public override void Commit()
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Balances,
-            entities: list,
+            entities: collection.Values,
             createMapDelegate: entity => new Entities.Balance
             {
                 Guid = entity.Guid,
@@ -63,12 +76,10 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
         );
     }
 
-    protected override async Task<List<Balance>> GetFromDbByGuidsAsync(List<Guid> guids)
+    protected override async Task<Dictionary<Guid, Balance>> GetFromDbByGuidsAsync(HashSet<Guid> guids)
     {
-        return (await context.Balances
+        return await context.Balances
             .Where(x => guids.Contains(x.Guid))
-            .ToListAsync())
-            .Select(x => Balance.IRepository.Restore(x.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
-            .ToList();
+            .ToDictionaryAsync(x => x.Guid, x => Restore(x));
     }
 }

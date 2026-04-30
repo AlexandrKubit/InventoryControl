@@ -9,6 +9,7 @@ public class Context : DbContext
     {
         Database.EnsureCreated();
         ChangeTracker.LazyLoadingEnabled = false;
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

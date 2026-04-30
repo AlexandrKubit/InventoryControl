@@ -25,12 +25,12 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
         {
             await Document.UpdateRange([new Document.UpdateArg(request.Guid, request.Number, request.Date)], data);
 
-            await data.ReceiptItem.FillByReceiptGuids([request.Guid]);
+            await data.ReceiptItem.EnsureByReceiptGuids([request.Guid]);
             var items = data.ReceiptItem.List.Where(x => x.ReceiptGuid == request.Guid).ToList();
 
             // delete
             var deletedItemsGuids = items.Select(x => x.Guid).Except(request.Items.Select(x => x.Guid)).ToList();
-            await Item.DeleteRange(deletedItemsGuids.ToList(), data);
+            await Item.DeleteRange(deletedItemsGuids.ToHashSet(), data);
 
             // create
             var createdItems = request.Items.Where(x => x.Guid == Guid.Empty).ToList();

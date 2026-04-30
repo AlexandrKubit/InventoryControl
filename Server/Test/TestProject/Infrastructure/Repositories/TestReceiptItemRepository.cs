@@ -11,10 +11,10 @@ internal class TestReceiptItemRepository : TestBaseRepository<Item>, Item.IRepos
 
     // а это для юнит тестов
     public void Add(Guid guid, Guid receiptGuid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity) =>
-        list.Add(Item.IRepository.Restore(guid, receiptGuid, resourceGuid, measureUnitGuid, quantity));
+        collection.Add(guid, Item.IRepository.Restore(guid, receiptGuid, resourceGuid, measureUnitGuid, quantity));
 
-    public Task FillByMeasureUnitGuids(List<Guid> unitGuids) => Task.CompletedTask;
-    public Task FillByResourceGuids(List<Guid> resourceGuids) => Task.CompletedTask;
-    public Task FillByReceiptGuids(List<Guid> receiptGuids) => Task.CompletedTask;
-    public Task FillByGuids(List<Guid> guids) => Task.CompletedTask;
+    public Task EnsureByMeasureUnitGuids(HashSet<Guid> unitGuids) => Task.CompletedTask;
+    public Task EnsureByResourceGuids(HashSet<Guid> resourceGuids) => Task.CompletedTask;
+    public Task EnsureByReceiptGuids(HashSet<Guid> receiptGuids) => Task.CompletedTask;
+    public Task EnsureByGuids(HashSet<Guid> guids) => Task.CompletedTask;
 }

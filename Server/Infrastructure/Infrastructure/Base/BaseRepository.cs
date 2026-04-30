@@ -16,11 +16,19 @@ internal abstract class BaseRepository
 
 internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity : BaseEntity
 {
+    // основная коллеция сущностей выражена словарем для быстрого поиска по ключу
+    protected Dictionary<Guid, TEntity> collection = new();
+
     /// <summary>
     /// Коллекция сущностей TEntity : BaseEntity, доступны лишь те, которые не помечены как "удаленные"
     /// </summary>
-    public IEnumerable<TEntity> List => list.Where(x => x.ModificationType != BaseEntity.ModificationTypes.Removed);
-    protected List<TEntity> list = new();
+    public IEnumerable<TEntity> List => collection
+        .Select(x=> x.Value)
+        .Where(x => x.ModificationType != BaseEntity.ModificationTypes.Removed);
+
+    // для удобного использования в репозиториях
+    protected HashSet<Guid> LoadedGuids => new(collection.Keys);
+
 
     /// <summary>
     /// Метод который добавлет сущность в коллекцию. 
@@ -28,82 +36,65 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
     /// (при этом больше никак не возможно отметить сущность как созданная),
     /// то вызов AddEntity из любого другого места теряет смысл, т.к. сущность просто не будет добавлена в коллекцию
     /// </summary>
-    /// <param name="entity"></param>
     public void Add(TEntity entity)
     {
-        if (entity.ModificationType == BaseEntity.ModificationTypes.Created && !list.Any(e => e.Guid == entity.Guid))
-        {
-            list.Add(entity);
-        }
+        if (entity.ModificationType == BaseEntity.ModificationTypes.Created)
+            collection.Add(entity.Guid, entity);
     }
 
-    ///// <summary>
-    ///// коллекция функций и аргументов репозиториев, которые уже вызывались
-    ///// </summary>
-    private readonly Dictionary<string, HashSet<object>> cache = new();
 
+    /// <summary>Добавляет сущности, не вызывая исключений при уже существующих ключах.</summary>
+    private void AddNewEntities(Dictionary<Guid, TEntity> entities)
+    {
+        foreach (var kvp in entities)
+            collection.TryAdd(kvp.Key, kvp.Value);
+    }
 
     /// <summary>
-    /// Метод сравнивает полученные guids с теми что уже добавлены в коллекцию
+    /// Метод для быстрой загрузки по ключу, в обход общего кэша 
+    /// сравнивает полученные guids с теми что уже добавлены в коллекцию
     /// и передает те, которых еще нет в коллекции в метод GetFromDbByGuidsAsync,
-    /// этот метод возвращает из БД сущности и потом эти сущности добавляются в коллекцию
+    /// который возвращает сущности из БД чтобы добавить их в коллекцию
     /// </summary>
-    /// <param name="guids"></param>
-    /// <returns></returns>
-    public async Task FillByGuids(List<Guid> guids)
+    public async Task EnsureByGuids(HashSet<Guid> guids)
     {
-        var existGuids = list
-            .Select(y => y.Guid)
-            .ToList();
+        var missing = guids.Where(g => !collection.ContainsKey(g)).ToHashSet();
+        if (missing.Count == 0) 
+            return;
 
-        guids = guids.Except(existGuids).ToList();
-
-        if (guids.Count != 0)
-        {
-            var inDb = await GetFromDbByGuidsAsync(guids);
-            list.AddRange(inDb);
-        }
+        var loaded = await GetFromDbByGuidsAsync(missing);
+        AddNewEntities(loaded);
     }
 
     /// <summary>
     /// Метод который возвращает список сущностей по guids из БД
-    /// Его необходимо реализовывать в каждом репозитории
-    /// Метод protected потому что его нельзя вызывать напрямую для получения сущностей из БД
-    /// Так как напомню еще раз, репозиторий - это коллекция
     /// </summary>
-    /// <param name="guids"></param>
-    /// <returns></returns>
-    protected abstract Task<List<TEntity>> GetFromDbByGuidsAsync(List<Guid> guids);
+    protected abstract Task<Dictionary<Guid, TEntity>> GetFromDbByGuidsAsync(HashSet<Guid> guids);
 
-
-    ///// <summary>
-    ///// Универсальный метод для кэшированной загрузки данных по методу и параметрам
-    ///// если метод вызывался с этими же аргументами, то он не будет повторно вызываться
-    ///// если присутствует новый аргумент, то метод вызовется только с новым аргументом
-    ///// </summary>
-    protected async Task LoadWithCacheAsync<TArgs>(IEnumerable<TArgs> args, Func<IEnumerable<TArgs>, Task<List<Guid>>> loadFunction, object callerInstance, [CallerMemberName] string caller = "")
+    // кэш методов и аргументов репозиториев, которые уже вызывались 
+    private readonly Dictionary<string, HashSet<object>> cache = new();
+    protected async Task LoadWithCacheAsync<TArgs>(
+        HashSet<TArgs> args,
+        Func<HashSet<TArgs>, Task<Dictionary<Guid, TEntity>>> loadFunction,
+        [CallerMemberName] string caller = "")
     {
-        //var cacheKey = $"{loadFunction.Method.DeclaringType.FullName}:{loadFunction.Method.Name}";
-        var cacheKey = $"{callerInstance.GetType().FullName}.{caller}";
-
-        // Инициализация кэша для данного метода
-        if (!cache.ContainsKey(cacheKey))
-            cache[cacheKey] = new HashSet<object>();
-
-        var cachedArgs = cache[cacheKey];
+        if (!cache.TryGetValue(caller, out var cachedArgs))
+        {
+            cachedArgs = new HashSet<object>();
+            cache[caller] = cachedArgs;
+        }
 
         // Определяем новые аргументы, которые ещё не обработаны
-        var newArgs = args.Where(arg => !cachedArgs.Contains(arg)).ToList();
-        if (!newArgs.Any()) return;
+        var newArgs = args.Where(arg => !cachedArgs.Contains(arg)).ToHashSet();
+        if (newArgs.Count == 0) return;
 
         // Добавляем новые аргументы в кэш
         foreach (var arg in newArgs)
-        {
             cachedArgs.Add(arg);
-        }
 
         // Вызываем загрузку только для новых аргументов
-        var guids = await loadFunction(newArgs);
-        await FillByGuids(guids);
+        var entities = await loadFunction(newArgs);
+
+        AddNewEntities(entities);
     }
 }
