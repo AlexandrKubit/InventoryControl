@@ -8,7 +8,7 @@ using TestProject.Infrastructure.Repositories;
 
 namespace Tests.Infrastructure;
 
-internal class TestUnitOfWork : IData
+internal class TestUnitOfWork: IData
 {
     static TestUnitOfWork()
     {

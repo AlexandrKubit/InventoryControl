@@ -6,14 +6,14 @@ namespace Tests.Infrastructure;
 
 internal class TestClientRepository : TestBaseRepository<Client>, Client.IRepository
 {
-    // по сути это для интеграциооных тестов
+    // для интеграциооных тестов
     public override void InitData()
     {
 		Add(Guid.NewGuid(), "Client 1", "Address 1", Client.Conditions.Work);
 		Add(Guid.NewGuid(), "Client 2", "Address 2", Client.Conditions.Archive);
     }
 
-    // а это для юнит тестов
+    // для юнит тестов
     public void Add(Guid guid, string name, string address, Client.Conditions condition) =>
         collection.Add(guid, Client.IRepository.Restore(guid, name, address, condition));
 
