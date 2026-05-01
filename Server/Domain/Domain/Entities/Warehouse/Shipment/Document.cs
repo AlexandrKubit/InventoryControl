@@ -52,8 +52,14 @@ public sealed class Document : BaseEntity
     }
 
     // предположим, что в нашем домене нельзя создать пустой документ отгрузки
-    // в этом случае нам необходимо в это бизнес действие передать информацию о ресурсах, которые мы отгружаем
-    public record CreateArg(string Number, Guid ClientGuid, DateTime Date, List<Item.CreateArg> CreateItems);
+    // в этом случае нам необходимо в это бизнес действие передать информацию 
+    // о ресурсах, которые мы отгружаем
+    public record CreateArg(
+        string Number, 
+        Guid ClientGuid, 
+        DateTime Date, 
+        List<Item.CreateArg> CreateItems
+    );
     public static async Task<List<Document>> CreateRange(List<CreateArg> args, IData data)
     {
         if (args.Any(x => x.CreateItems.Count == 0))
@@ -63,21 +69,39 @@ public sealed class Document : BaseEntity
         await data.Shipment.EnsureByNumbers(numbers);
 
         if (data.Shipment.List.Any(x => numbers.Contains(x.Number)))
-            throw new DomainException("В системе уже зарегистрирована отгрузка с таким номером");
+            throw new DomainException(
+                "В системе уже зарегистрирована отгрузка с таким номером"
+            );
 
         List<Document> documents = new List<Document>();
-        List<Item.CreateArg> createItems = new List<Item.CreateArg>();
+        List<Item.CreateArg> createItemArgs = new List<Item.CreateArg>();
 
         foreach (var arg in args)
         {
-            var document = new Document(Guid.CreateVersion7(), arg.Number, arg.ClientGuid, arg.Date, Conditions.Unsigned);
+            var document = new Document(
+                Guid.CreateVersion7(), 
+                arg.Number, 
+                arg.ClientGuid, 
+                arg.Date, 
+                Conditions.Unsigned
+            );
             document.Create();
 			data.Shipment.Add(document);
 			documents.Add(document);
-            createItems.AddRange(arg.CreateItems.Select(x => new Item.CreateArg(document.Guid, x.ResourceGuid, x.MeasureUnitGuid, x.Quantity)));
+
+            var itemCreateArg = arg.CreateItems.Select(x => 
+                new Item.CreateArg(
+                    document.Guid,
+                    x.ResourceGuid,
+                    x.MeasureUnitGuid,
+                    x.Quantity
+                ));
+            createItemArgs.AddRange(itemCreateArg);
         }
 
-        await Item.CreateRange(createItems, data);
+        // Если Document.CreateRange нужны сами объекты Item
+        // (например, для дальнейшей логики)
+        var createdItems = await Item.CreateRange(createItemArgs, data);
 
         return documents;
     }

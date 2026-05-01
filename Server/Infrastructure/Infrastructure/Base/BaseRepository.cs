@@ -8,19 +8,19 @@ internal abstract class BaseRepository
     /// <summary>
     /// Метод вызывается в конце сценария, для того чтобы синхронизировать данные в БД и данные в коллекции
     /// Условно если где то выбросилось исключение, то никакие данные даже не будут переданы в БД
-    /// Нужно реализовывть в каждом репозитории
+    /// Нужно реализовывать в каждом репозитории
     /// В БД должны отправиться только те данные, которые были помечены как "создан", "изменен" или "удален"
     /// </summary>
     public abstract void Commit();
 }
 
-internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity : BaseEntity
+internal abstract class BaseRepository<TEntity>: BaseRepository where TEntity: BaseEntity
 {
     // основная коллеция сущностей выражена словарем для быстрого поиска по ключу
     protected Dictionary<Guid, TEntity> collection = new();
 
     /// <summary>
-    /// Коллекция сущностей TEntity : BaseEntity, доступны лишь те, которые не помечены как "удаленные"
+    /// Коллекция сущностей TEntity: BaseEntity, доступны лишь те, которые не помечены как "удаленные"
     /// </summary>
     public IEnumerable<TEntity> List => collection
         .Select(x=> x.Value)
@@ -31,7 +31,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
 
 
     /// <summary>
-    /// Метод который добавлет сущность в коллекцию. 
+    /// Метод, который добавляет сущность в коллекцию. 
     /// Сущность должна быть помечена как Created
     /// А так как это может сделать только сама сущность то метод безопасен
     /// </summary>
@@ -51,7 +51,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
 
     /// <summary>
     /// Метод для быстрой загрузки по ключу, в обход общего кэша 
-    /// сравнивает полученные guids с теми что уже добавлены в коллекцию
+    /// сравнивает полученные guids с теми, что уже добавлены в коллекцию
     /// и передает те, которых еще нет в коллекции в метод GetFromDbByGuidsAsync,
     /// который возвращает сущности из БД чтобы добавить их в коллекцию
     /// </summary>
@@ -66,7 +66,7 @@ internal abstract class BaseRepository<TEntity> : BaseRepository where TEntity :
     }
 
     /// <summary>
-    /// Метод который возвращает список сущностей по guids из БД
+    /// Метод, который возвращает список сущностей по guids из БД
     /// </summary>
     protected abstract Task<Dictionary<Guid, TEntity>> GetFromDbByGuidsAsync(HashSet<Guid> guids);
 

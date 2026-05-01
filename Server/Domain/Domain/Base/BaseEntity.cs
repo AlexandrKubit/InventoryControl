@@ -1,7 +1,7 @@
 ﻿namespace Domain.Base;
 
 /// <summary>
-/// Базовый класс для всех доменных сущностей, которые работают с репозиториями BaseRepository<T> where T : BaseEntity 
+/// Базовый класс для всех доменных сущностей
 /// </summary>
 public class BaseEntity
 {

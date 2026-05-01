@@ -55,23 +55,35 @@ public sealed class Item : BaseEntity
         return items;
     }
 
-    public record UpdateArg(Guid Guid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
+    public record UpdateArg(
+        Guid Guid, 
+        Guid ResourceGuid, 
+        Guid MeasureUnitGuid, 
+        decimal Quantity
+    );
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
+        // Подготавливаем все изменяемые позиции по их идентификаторам
         var guids = args.Select(x => x.Guid).ToHashSet();
         await data.ShipmentItem.EnsureByGuids(guids);
-        var items = data.ShipmentItem.List.Where(x => guids.Contains(x.Guid)).ToList();
+        var items = data.ShipmentItem.List
+            .Where(x => guids.Contains(x.Guid)).ToList();
 
+        // Определяем, к каким отгрузкам относятся эти позиции
         var shipmentGuids = items.Select(x => x.ShipmentGuid).ToHashSet();
         await data.Shipment.EnsureByGuids(shipmentGuids);
 
-        if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
+        // Проверяем бизнес-правило: нельзя менять позиции в подписанной отгрузке
+        var shipments = data.Shipment.List
+            .Where(x => shipmentGuids.Contains(x.Guid));
+            
+        if (shipments.Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно изменить ресурс в подписанной отгрузке");
 
+        // Применяем изменения к каждой позиции
         foreach (var item in items)
         {
             var arg = args.First(x => x.Guid == item.Guid);
-
             item.ResourceGuid = arg.ResourceGuid;
             item.MeasureUnitGuid = arg.MeasureUnitGuid;
             item.Quantity = arg.Quantity;
