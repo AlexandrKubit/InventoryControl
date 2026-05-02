@@ -9,10 +9,10 @@ internal class ReceiptItemRepository : BaseRepository<Item>, Item.IRepository
 {
     public ReceiptItemRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
-    private Context context { get; set; }
+    private readonly Context context;
 
     private Item Restore(Entities.ReceiptItem item) =>
         Item.IRepository.Restore(item.Guid, item.ReceiptGuid, item.ResourceGuid, item.MeasureUnitGuid, item.Quantity);

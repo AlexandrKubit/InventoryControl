@@ -9,10 +9,10 @@ internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.
 {
     public MeasureUnitRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
-    private Context context { get; set; }
+    private readonly Context context;
 
     private MeasureUnit Restore(Entities.MeasureUnit unit) =>
         MeasureUnit.IRepository.Restore(unit.Guid, unit.Name, unit.Condition);

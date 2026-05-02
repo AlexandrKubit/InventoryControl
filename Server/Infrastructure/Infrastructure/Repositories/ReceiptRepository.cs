@@ -9,10 +9,10 @@ internal class ReceiptRepository : BaseRepository<Document>, Document.IRepositor
 {
     public ReceiptRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
-    private Context context { get; set; }
+    private readonly Context context;
 
     private Document Restore(Entities.Receipt receipt) =>
         Document.IRepository.Restore(receipt.Guid, receipt.Number, receipt.Date);

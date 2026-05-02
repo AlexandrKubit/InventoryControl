@@ -10,10 +10,10 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
 {
     public ResourceRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
-    private Context context { get; set; }
+    private readonly Context context;
 
     private Resource Restore(Entities.Resource resource) =>
         Resource.IRepository.Restore(resource.Guid, resource.Name, resource.Condition);

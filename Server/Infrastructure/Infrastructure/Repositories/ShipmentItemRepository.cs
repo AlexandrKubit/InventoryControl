@@ -9,10 +9,10 @@ internal class ShipmentItemRepository : BaseRepository<Item>, Item.IRepository
 {
     public ShipmentItemRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
-    private Context context { get; set; }
+    private readonly Context context;
 
     private Item Restore(Entities.ShipmentItem item) =>
         Item.IRepository.Restore(item.Guid, item.ShipmentGuid, item.ResourceGuid, item.MeasureUnitGuid, item.Quantity);

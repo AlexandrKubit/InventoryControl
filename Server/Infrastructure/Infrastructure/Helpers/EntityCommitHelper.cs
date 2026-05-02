@@ -29,7 +29,7 @@ public static class EntityCommitHelper
             // такой подход позволяет использовать EF Core без change tracking
             // ВАЖНО: необходимо создать пустой объект, прикрепить его к контексту, а затем обновить нужные поля
             var dbEntity = new TEntityMap { Guid = entity.Guid };
-            dbSet.Attach(dbEntity);        // "Прикрепляем" к контексту как существующий
+            dbSet.Attach(dbEntity);        // Прикрепляем к контексту как существующий
             updateMapDelegate(dbEntity, entity); // Применяем изменения из домена
         }
 
@@ -37,7 +37,7 @@ public static class EntityCommitHelper
         var deleted = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Removed);
         foreach (var entity in deleted)
         {
-            var dbEntity = createMapDelegate(entity);
+            var dbEntity = new TEntityMap { Guid = entity.Guid };
             dbSet.Attach(dbEntity); // Прикрепляем как существующий
             dbSet.Remove(dbEntity); // Помечаем на удаление
         }

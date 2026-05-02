@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 internal class ClientRepository : BaseRepository<Client>, Client.IRepository
 {
-    private Context context { get; set; }
+    private readonly Context context;
 
     public ClientRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
     /// использует статический protected метод Restore, объявленный в Client.IRepository 

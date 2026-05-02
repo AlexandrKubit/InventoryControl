@@ -9,10 +9,10 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
 {
     public BalanceRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
-    private Context context { get; set; }
+    private readonly Context context;
 
     private Balance Restore(Entities.Balance balance)
     {

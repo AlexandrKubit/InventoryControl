@@ -9,10 +9,10 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
 {
     public ShipmentRepository(UnitOfWork uow)
     {
-        this.context = uow.Context;
+        context = uow.Context;
     }
 
-    private Context context { get; set; }
+    private readonly Context context;
 
     private Document Restore(Entities.Shipment shipment) =>
         Document.IRepository.Restore(shipment.Guid, shipment.Number, shipment.ClientGuid, shipment.Date, shipment.Condition);
