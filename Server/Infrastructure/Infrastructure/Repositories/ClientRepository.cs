@@ -39,7 +39,7 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
     }
 
     /// <summary>
-    /// Фиксация изменений: хэлпер EntityCommitHelper обрабатывает все сущности из коллекции list,
+    /// Фиксация изменений: хелпер EntityCommitHelper обрабатывает все сущности из коллекции list,
     /// анализируя их ModificationType (Created, Updated, Removed), и применяет соответствующие
     /// операции к DbSet context.Clients. Это позволяет сохранить атомарность и избавляет
     /// домен от явных вызовов репозитория для сохранения.

@@ -37,6 +37,7 @@ public static class EntityCommitHelper
         var deleted = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Removed);
         foreach (var entity in deleted)
         {
+            // для удаления достаточно идентификатора
             var dbEntity = new TEntityMap { Guid = entity.Guid };
             dbSet.Attach(dbEntity); // Прикрепляем как существующий
             dbSet.Remove(dbEntity); // Помечаем на удаление

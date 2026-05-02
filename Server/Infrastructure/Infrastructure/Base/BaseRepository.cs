@@ -26,7 +26,8 @@ internal abstract class BaseRepository<TEntity>: BaseRepository where TEntity: B
         .Select(x=> x.Value)
         .Where(x => x.ModificationType != BaseEntity.ModificationTypes.Removed);
 
-    // для удобного использования в репозиториях, чтобы не загружать лишние сущности 
+    // Намеренно создаем новый HashSet при обращении 
+    // чтобы EF Core мог эффективно превратить Contains в SQL‑оператор IN
     protected HashSet<Guid> LoadedGuids => new(collection.Keys);
 
 
