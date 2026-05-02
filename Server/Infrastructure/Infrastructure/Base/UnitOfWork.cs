@@ -131,12 +131,12 @@ public sealed class UnitOfWork : IData, IUnitOfWork
 
     // Доступ к конкретным репозиториям через интерфейс IData.
     // Репозитории создаются лениво и кэшируются.
-    Client.IRepository IData.Client => Get<ClientRepository>();
-    MeasureUnit.IRepository IData.MeasureUnit => Get<MeasureUnitRepository>();
-    Resource.IRepository IData.Resource => Get<ResourceRepository>();
-    Balance.IRepository IData.Balance => Get<BalanceRepository>();
-    Domain.Entities.Warehouse.Receipt.Document.IRepository IData.Receipt => Get<ReceiptRepository>();
-    Domain.Entities.Warehouse.Receipt.Item.IRepository IData.ReceiptItem => Get<ReceiptItemRepository>();
-    Domain.Entities.Warehouse.Shipment.Document.IRepository IData.Shipment => Get<ShipmentRepository>();
-    Domain.Entities.Warehouse.Shipment.Item.IRepository IData.ShipmentItem => Get<ShipmentItemRepository>();
+    Client.IRepository IData.Clients => Get<ClientRepository>();
+    MeasureUnit.IRepository IData.MeasureUnits => Get<MeasureUnitRepository>();
+    Resource.IRepository IData.Resources => Get<ResourceRepository>();
+    Balance.IRepository IData.Balances => Get<BalanceRepository>();
+    Domain.Entities.Warehouse.Receipt.Document.IRepository IData.Receipts => Get<ReceiptRepository>();
+    Domain.Entities.Warehouse.Receipt.Item.IRepository IData.ReceiptItems => Get<ReceiptItemRepository>();
+    Domain.Entities.Warehouse.Shipment.Document.IRepository IData.Shipments => Get<ShipmentRepository>();
+    Domain.Entities.Warehouse.Shipment.Item.IRepository IData.ShipmentItems => Get<ShipmentItemRepository>();
 }

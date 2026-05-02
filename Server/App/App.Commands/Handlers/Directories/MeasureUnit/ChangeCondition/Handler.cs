@@ -11,8 +11,8 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request)
     {
-        await data.MeasureUnit.EnsureByGuids([request.Guid]);
-        var unit = data.MeasureUnit.List.FirstOrDefault(x => x.Guid == request.Guid);
+        await data.MeasureUnits.EnsureByGuids([request.Guid]);
+        var unit = data.MeasureUnits.List.FirstOrDefault(x => x.Guid == request.Guid);
 
         if (unit.Condition == MeasureUnit.Conditions.Work)
             await MeasureUnit.ToArchiveRange([request.Guid], data);

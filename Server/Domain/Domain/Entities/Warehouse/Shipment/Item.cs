@@ -37,9 +37,9 @@ public sealed class Item : BaseEntity
     public static async Task<HashSet<Item>> CreateRange(List<CreateArg> args, IData data)
     {
         var shipmentGuids = args.Select(x => x.ShipmentGuid).ToHashSet();
-        await data.Shipment.EnsureByGuids(shipmentGuids);
+        await data.Shipments.EnsureByGuids(shipmentGuids);
 
-        if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
+        if (data.Shipments.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно добавить ресурс в подписанную отгрузку");
 
         HashSet<Item> items = new HashSet<Item>();
@@ -48,7 +48,7 @@ public sealed class Item : BaseEntity
         {
             var item = new Item(Guid.CreateVersion7(), arg.ShipmentGuid, arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
             item.Create();
-			data.ShipmentItem.Add(item);
+			data.ShipmentItems.Add(item);
 			items.Add(item);
         }
 
@@ -65,16 +65,16 @@ public sealed class Item : BaseEntity
     {
         // Подготавливаем все изменяемые позиции по их идентификаторам
         var guids = args.Select(x => x.Guid).ToHashSet();
-        await data.ShipmentItem.EnsureByGuids(guids);
-        var items = data.ShipmentItem.List
+        await data.ShipmentItems.EnsureByGuids(guids);
+        var items = data.ShipmentItems.List
             .Where(x => guids.Contains(x.Guid)).ToList();
 
         // Определяем, к каким отгрузкам относятся эти позиции
         var shipmentGuids = items.Select(x => x.ShipmentGuid).ToHashSet();
-        await data.Shipment.EnsureByGuids(shipmentGuids);
+        await data.Shipments.EnsureByGuids(shipmentGuids);
 
         // Проверяем бизнес-правило: нельзя менять позиции в подписанной отгрузке
-        var shipments = data.Shipment.List
+        var shipments = data.Shipments.List
             .Where(x => shipmentGuids.Contains(x.Guid));
             
         if (shipments.Any(x => x.Condition == Document.Conditions.Signed))
@@ -93,23 +93,23 @@ public sealed class Item : BaseEntity
 
     public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ShipmentItem.EnsureByGuids(guids);
-        var items = data.ShipmentItem.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.ShipmentItems.EnsureByGuids(guids);
+        var items = data.ShipmentItems.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         var shipmentGuids = items.Select(x => x.ShipmentGuid).ToHashSet();
-        await data.Shipment.EnsureByGuids(shipmentGuids);
+        await data.Shipments.EnsureByGuids(shipmentGuids);
 
-        if (data.Shipment.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
+        if (data.Shipments.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно удалить ресурс из подписанной отгрузки");
 
         foreach (var item in items)
             item.Remove();
         
-        await data.ShipmentItem.EnsureByShipmentGuids(shipmentGuids);
+        await data.ShipmentItems.EnsureByShipmentGuids(shipmentGuids);
 
         foreach (var sg in shipmentGuids)
         {
-            if (!data.ShipmentItem.List.Any(x => x.ShipmentGuid == sg))
+            if (!data.ShipmentItems.List.Any(x => x.ShipmentGuid == sg))
                 throw new DomainException("Невозможно удалить все ресурсы из отгрузки");
         }
     }

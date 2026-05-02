@@ -17,7 +17,7 @@ namespace TestProject.Tests.Domain
             var result = await Client.CreateRange(new List<Client.CreateArg> { newClientArgs }, uow);
 
             Assert.Single(result); // Проверяем, что создан один клиент
-            Assert.Equal(3, uow.Client.List.Count()); // 2 предзаполненных + 1 новый
+            Assert.Equal(3, uow.Clients.List.Count()); // 2 предзаполненных + 1 новый
         }
 
         // грубо говоря это юнит тест
@@ -25,15 +25,15 @@ namespace TestProject.Tests.Domain
         public async Task CreateRange_Unit()
         {
             var uow = new TestUnitOfWork();
-            ((TestClientRepository)uow.Client).Add(Guid.NewGuid(), "Client 1", "Address 1", Client.Conditions.Work);
-            ((TestClientRepository)uow.Client).Add(Guid.NewGuid(), "Client 2", "Address 2", Client.Conditions.Work);
+            ((TestClientRepository)uow.Clients).Add(Guid.NewGuid(), "Client 1", "Address 1", Client.Conditions.Work);
+            ((TestClientRepository)uow.Clients).Add(Guid.NewGuid(), "Client 2", "Address 2", Client.Conditions.Work);
 
             var newClientArgs = new Client.CreateArg("Unique Name", "New Address");
 
             var result = await Client.CreateRange(new List<Client.CreateArg> { newClientArgs }, uow);
 
             Assert.Single(result); // Проверяем, что создан один клиент
-            Assert.Equal(3, uow.Client.List.Count()); // 2 предзаполненных + 1 новый
+            Assert.Equal(3, uow.Clients.List.Count()); // 2 предзаполненных + 1 новый
         }
 
         // реальный тест бизнес-логики
@@ -41,7 +41,7 @@ namespace TestProject.Tests.Domain
         public async Task CreateRange_WithExistingName_ThrowsDomainException()
         {
             var uow = new TestUnitOfWork();
-            ((TestClientRepository)uow.Client).Add(Guid.NewGuid(), "Existing Name", "Address", Client.Conditions.Work);
+            ((TestClientRepository)uow.Clients).Add(Guid.NewGuid(), "Existing Name", "Address", Client.Conditions.Work);
             var duplicateClientArg = new Client.CreateArg("Existing Name", "New Address");
 
             await Assert.ThrowsAsync<DomainException>(() =>

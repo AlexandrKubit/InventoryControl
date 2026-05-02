@@ -14,16 +14,16 @@ namespace TestProject.Tests.Domain
             var resourceGuid = Guid.CreateVersion7();
             var measureUnitGuid = Guid.CreateVersion7();
 
-            ((TestBalanceRepository)uow.Balance)
+            ((TestBalanceRepository)uow.Balances)
                 .Add(Guid.CreateVersion7(), resourceGuid, measureUnitGuid, 100);
 
             var guid = Guid.CreateVersion7();
-            ((TestReceiptItemRepository)uow.ReceiptItem)
+            ((TestReceiptItemRepository)uow.ReceiptItems)
                 .Add(guid, Guid.CreateVersion7(), resourceGuid, measureUnitGuid, 30);
 
             await Item.DeleteRange([guid], uow);
 
-            var updatedBalance = uow.Balance.List.First();
+            var updatedBalance = uow.Balances.List.First();
             Assert.Equal(70, updatedBalance.Quantity);
         }
     }

@@ -11,9 +11,9 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
 {
     public async Task<Guid> HandleAsync(Request request)
     {
-        await data.Shipment.EnsureByGuids([request.Guid]);
+        await data.Shipments.EnsureByGuids([request.Guid]);
 
-        var shipment = data.Shipment.List.FirstOrDefault(x => x.Guid == request.Guid);
+        var shipment = data.Shipments.List.FirstOrDefault(x => x.Guid == request.Guid);
 
         if (shipment.Condition == Document.Conditions.Unsigned)
         {

@@ -68,7 +68,7 @@ public sealed class Item : BaseEntity
         {
             var item = new Item(Guid.CreateVersion7(), arg.ReceiptGuid, arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
             item.Create();
-			data.ReceiptItem.Add(item);
+			data.ReceiptItems.Add(item);
 			items.Add(item);
         }
 
@@ -80,8 +80,8 @@ public sealed class Item : BaseEntity
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
         var guids = args.Select(x => x.Guid).ToHashSet();
-        await data.ReceiptItem.EnsureByGuids(guids);
-        var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.ReceiptItems.EnsureByGuids(guids);
+        var items = data.ReceiptItems.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         List<(ItemData Old, ItemData New)> сhanges = [];
 
@@ -105,8 +105,8 @@ public sealed class Item : BaseEntity
 
     public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ReceiptItem.EnsureByGuids(guids);
-        var items = data.ReceiptItem.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.ReceiptItems.EnsureByGuids(guids);
+        var items = data.ReceiptItems.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var item in items)
             item.Remove();

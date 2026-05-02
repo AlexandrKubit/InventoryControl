@@ -47,11 +47,11 @@ public sealed class Balance : BaseEntity
     private static async Task AddRangeToStock(List<AddRangeToStockArg> args, IData data)
     {
         var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToHashSet();
-        await data.Balance.EnsureByResourceMeasureUnit(resourceMeasureUnits);
+        await data.Balances.EnsureByResourceMeasureUnit(resourceMeasureUnits);
 
         foreach (var arg in args)
         {
-            var balance = data.Balance.List.FirstOrDefault(x => x.MeasureUnitGuid == arg.MeasureUnitGuid && x.ResourceGuid == arg.ResourceGuid);
+            var balance = data.Balances.List.FirstOrDefault(x => x.MeasureUnitGuid == arg.MeasureUnitGuid && x.ResourceGuid == arg.ResourceGuid);
             if (balance != null)
             {
                 balance.Quantity += arg.Quantity;
@@ -61,7 +61,7 @@ public sealed class Balance : BaseEntity
             {
                 balance = new Balance(Guid.CreateVersion7(), arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
                 balance.Create();
-				data.Balance.Add(balance);
+				data.Balances.Add(balance);
 			}
         }
     }
@@ -70,11 +70,11 @@ public sealed class Balance : BaseEntity
     private static async Task RemoveRangeFromStock(List<RemoveRangeFromStockArg> args, IData data)
     {
         var resourceMeasureUnits = args.Select(x => (x.ResourceGuid, x.MeasureUnitGuid)).ToHashSet();
-        await data.Balance.EnsureByResourceMeasureUnit(resourceMeasureUnits);
+        await data.Balances.EnsureByResourceMeasureUnit(resourceMeasureUnits);
 
         foreach (var arg in args)
         {
-            var balance = data.Balance.List.FirstOrDefault(x => x.MeasureUnitGuid == arg.MeasureUnitGuid && x.ResourceGuid == arg.ResourceGuid);
+            var balance = data.Balances.List.FirstOrDefault(x => x.MeasureUnitGuid == arg.MeasureUnitGuid && x.ResourceGuid == arg.ResourceGuid);
             if (balance != null)
             {
                 if (balance.Quantity < arg.Quantity)
@@ -161,8 +161,8 @@ public sealed class Balance : BaseEntity
     {
         var guids = arg.Documents.Select(x => x.Guid).ToHashSet();
 
-        await arg.Data.ShipmentItem.EnsureByShipmentGuids(guids);
-        var items = arg.Data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
+        await arg.Data.ShipmentItems.EnsureByShipmentGuids(guids);
+        var items = arg.Data.ShipmentItems.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
         var removeRangeFromStockArgs = items
             .Select(x => new RemoveRangeFromStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))
@@ -175,8 +175,8 @@ public sealed class Balance : BaseEntity
     {
         var guids = arg.Documents.Select(x => x.Guid).ToHashSet();
 
-        await arg.Data.ShipmentItem.EnsureByShipmentGuids(guids);
-        var items = arg.Data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
+        await arg.Data.ShipmentItems.EnsureByShipmentGuids(guids);
+        var items = arg.Data.ShipmentItems.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
         var addRangeToStockArgs = items
             .Select(x => new AddRangeToStockArg(x.ResourceGuid, x.MeasureUnitGuid, x.Quantity))

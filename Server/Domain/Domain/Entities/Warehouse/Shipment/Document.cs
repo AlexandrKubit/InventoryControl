@@ -66,9 +66,9 @@ public sealed class Document : BaseEntity
             throw new DomainException("Невозможно создать пустую отгрузку");
 
         var numbers = args.Select(x => x.Number).ToHashSet();
-        await data.Shipment.EnsureByNumbers(numbers);
+        await data.Shipments.EnsureByNumbers(numbers);
 
-        if (data.Shipment.List.Any(x => numbers.Contains(x.Number)))
+        if (data.Shipments.List.Any(x => numbers.Contains(x.Number)))
             throw new DomainException(
                 "В системе уже зарегистрирована отгрузка с таким номером"
             );
@@ -86,7 +86,7 @@ public sealed class Document : BaseEntity
                 Conditions.Unsigned
             );
             document.Create();
-			data.Shipment.Add(document);
+			data.Shipments.Add(document);
 			documents.Add(document);
 
             var itemCreateArg = arg.CreateItems.Select(x => 
@@ -110,14 +110,14 @@ public sealed class Document : BaseEntity
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
         var guids = args.Select(x => x.Guid).ToHashSet();
-        await data.Shipment.EnsureByGuids(guids);
-        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.Shipments.EnsureByGuids(guids);
+        var documents = data.Shipments.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         if (documents.Any(x => x.Condition == Conditions.Signed))
             throw new DomainException("Невозможно отредактировать подписанную отгрузку");
 
         var numbers = args.Select(x => x.Number).ToHashSet();
-        await data.Shipment.EnsureByNumbers(numbers);
+        await data.Shipments.EnsureByNumbers(numbers);
 
         foreach (var document in documents)
         {
@@ -131,22 +131,22 @@ public sealed class Document : BaseEntity
 
         foreach (var arg in args)
         {
-            if (data.Shipment.List.Any(x => x.Number == arg.Number && x.Guid != arg.Guid))
+            if (data.Shipments.List.Any(x => x.Number == arg.Number && x.Guid != arg.Guid))
                 throw new DomainException("В системе уже зарегистрирована отгрузка с таким номером");
         }
     }
 
     public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.Shipment.EnsureByGuids(guids);
-        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.Shipments.EnsureByGuids(guids);
+        var documents = data.Shipments.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         if (documents.Any(x => x.Condition == Conditions.Signed))
             throw new DomainException("Невозможно удалить подписанную отгрузку");
 
-        await data.ShipmentItem.EnsureByShipmentGuids(guids);
+        await data.ShipmentItems.EnsureByShipmentGuids(guids);
 
-        var itemGuids = data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).Select(x => x.Guid).ToHashSet();
+        var itemGuids = data.ShipmentItems.List.Where(x => guids.Contains(x.ShipmentGuid)).Select(x => x.Guid).ToHashSet();
         await Item.DeleteRange(itemGuids, data);
 
         foreach (var document in documents)
@@ -157,8 +157,8 @@ public sealed class Document : BaseEntity
 
     public static async Task SignRange(HashSet<Guid> guids, IData data)
     {
-        await data.Shipment.EnsureByGuids(guids);
-        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.Shipments.EnsureByGuids(guids);
+        var documents = data.Shipments.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var document in documents)
         {
@@ -169,8 +169,8 @@ public sealed class Document : BaseEntity
             document.Update();
         }
 
-        await data.ShipmentItem.EnsureByShipmentGuids(guids);
-        var items = data.ShipmentItem.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
+        await data.ShipmentItems.EnsureByShipmentGuids(guids);
+        var items = data.ShipmentItems.List.Where(x => guids.Contains(x.ShipmentGuid)).ToList();
 
         await SignedRange.Invoke(new SignedRangeArg(documents, data));
     }
@@ -178,8 +178,8 @@ public sealed class Document : BaseEntity
 
     public static async Task UnsignRange(HashSet<Guid> guids, IData data)
     {
-        await data.Shipment.EnsureByGuids(guids);
-        var documents = data.Shipment.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.Shipments.EnsureByGuids(guids);
+        var documents = data.Shipments.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var document in documents)
         {

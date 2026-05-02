@@ -36,9 +36,9 @@ public sealed class Document : BaseEntity
     public static async Task<List<Document>> CreateRange(List<CreateArg> args, IData data)
     {
         var numbers = args.Select(x => x.Number).ToHashSet();
-        await data.Receipt.EnsureByNumbers(numbers);
+        await data.Receipts.EnsureByNumbers(numbers);
 
-        if (data.Receipt.List.Any(x => numbers.Contains(x.Number)))
+        if (data.Receipts.List.Any(x => numbers.Contains(x.Number)))
             throw new DomainException("В системе уже зарегистрирована накладная с таким номером");
 
         List<Document> documents = new List<Document>();
@@ -47,7 +47,7 @@ public sealed class Document : BaseEntity
         {
             var document = new Document(Guid.CreateVersion7(), arg.Number, arg.Date);
             document.Create();
-            data.Receipt.Add(document);
+            data.Receipts.Add(document);
 			documents.Add(document);
         }
 
@@ -58,12 +58,12 @@ public sealed class Document : BaseEntity
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
         var guids = args.Select(x => x.Guid).ToHashSet();
-        await data.Receipt.EnsureByGuids(guids);
+        await data.Receipts.EnsureByGuids(guids);
 
         var numbers = args.Select(x => x.Number).ToHashSet();
-        await data.Receipt.EnsureByNumbers(numbers);
+        await data.Receipts.EnsureByNumbers(numbers);
 
-        var receipts = data.Receipt.List.Where(x => guids.Contains(x.Guid)).ToList();
+        var receipts = data.Receipts.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var receipt in receipts)
         {
@@ -76,7 +76,7 @@ public sealed class Document : BaseEntity
 
         foreach (var arg in args)
         {
-            if (data.Receipt.List.Any(x => x.Number == arg.Number && x.Guid != arg.Guid))
+            if (data.Receipts.List.Any(x => x.Number == arg.Number && x.Guid != arg.Guid))
                 throw new DomainException("В системе уже зарегистрирована накладная с таким номером");
         }
     }
@@ -87,17 +87,17 @@ public sealed class Document : BaseEntity
     // при том, что удаление ресурса из накладной тоже отдельное бизнесс действие
     public static async Task DeleteRange(HashSet<Guid> receiptGuids, IData data)
     {
-        await data.Receipt.EnsureByGuids(receiptGuids);
-        await data.ReceiptItem.EnsureByReceiptGuids(receiptGuids);
+        await data.Receipts.EnsureByGuids(receiptGuids);
+        await data.ReceiptItems.EnsureByReceiptGuids(receiptGuids);
 
-        var itemGuids = data.ReceiptItem.List
+        var itemGuids = data.ReceiptItems.List
             .Where(x => receiptGuids.Contains(x.ReceiptGuid))
             .Select(x=> x.Guid)
             .ToHashSet();
 
         await Item.DeleteRange(itemGuids, data);
 
-        var receipts = data.Receipt.List.Where(x => receiptGuids.Contains(x.Guid)).ToList();
+        var receipts = data.Receipts.List.Where(x => receiptGuids.Contains(x.Guid)).ToList();
         foreach (var receipt in receipts)
         {
             receipt.Remove();

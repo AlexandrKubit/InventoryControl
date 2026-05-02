@@ -36,9 +36,9 @@ public sealed class Resource : BaseEntity
 
     public static async Task<List<Resource>> CreateRange(HashSet<string> names, IData data)
     {
-        await data.Resource.EnsureByNames(names);
+        await data.Resources.EnsureByNames(names);
 
-        if (data.Resource.List.Any(x => names.Contains(x.Name)))
+        if (data.Resources.List.Any(x => names.Contains(x.Name)))
             throw new DomainException("В системе уже зарегистрирован ресурс с таким наименованием");
 
         List<Resource> resources = new List<Resource>();
@@ -47,7 +47,7 @@ public sealed class Resource : BaseEntity
         {
             var resource = new Resource(Guid.CreateVersion7(), name, Conditions.Work);
             resource.Create();
-			data.Resource.Add(resource);
+			data.Resources.Add(resource);
 			resources.Add(resource);
         }
 
@@ -58,12 +58,12 @@ public sealed class Resource : BaseEntity
     public static async Task UpdateRange(List<UpdateArg> args, IData data)
     {
         var guids = args.Select(x => x.Guid).ToHashSet();
-        await data.Resource.EnsureByGuids(guids);
+        await data.Resources.EnsureByGuids(guids);
 
         var names = args.Select(x => x.Name).ToHashSet();
-        await data.Resource.EnsureByNames(names);
+        await data.Resources.EnsureByNames(names);
 
-        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
+        var resources = data.Resources.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)
         {
@@ -75,26 +75,26 @@ public sealed class Resource : BaseEntity
 
         foreach (var arg in args)
         {
-            if (data.Resource.List.Any(x => x.Name == arg.Name && x.Guid != arg.Guid))
+            if (data.Resources.List.Any(x => x.Name == arg.Name && x.Guid != arg.Guid))
                 throw new DomainException("В системе уже зарегистрирован ресурс с таким наименованием");
         }
     }
 
     public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ReceiptItem.EnsureByResourceGuids(guids);
-        await data.Balance.EnsureByResourceGuids(guids);
-        await data.ShipmentItem.EnsureByResourceGuids(guids);
+        await data.ReceiptItems.EnsureByResourceGuids(guids);
+        await data.Balances.EnsureByResourceGuids(guids);
+        await data.ShipmentItems.EnsureByResourceGuids(guids);
 
-        var receiptItems = data.ReceiptItem.List.Where(x => guids.Contains(x.ResourceGuid));
-        var balances = data.Balance.List.Where(x => guids.Contains(x.ResourceGuid));
-        var shipmentItems = data.ShipmentItem.List.Where(x => guids.Contains(x.ResourceGuid));
+        var receiptItems = data.ReceiptItems.List.Where(x => guids.Contains(x.ResourceGuid));
+        var balances = data.Balances.List.Where(x => guids.Contains(x.ResourceGuid));
+        var shipmentItems = data.ShipmentItems.List.Where(x => guids.Contains(x.ResourceGuid));
 
         if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
             throw new DomainException("Невозможно удалить ресурс, так как он используется");
 
-        await data.Resource.EnsureByGuids(guids);
-        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.Resources.EnsureByGuids(guids);
+        var resources = data.Resources.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)
             resource.Remove();
@@ -102,8 +102,8 @@ public sealed class Resource : BaseEntity
 
     public static async Task ToArchiveRange(HashSet<Guid> guids, IData data)
     {
-        await data.Resource.EnsureByGuids(guids);
-        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.Resources.EnsureByGuids(guids);
+        var resources = data.Resources.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)
         {
@@ -119,8 +119,8 @@ public sealed class Resource : BaseEntity
 
     public static async Task ToWorkRange(HashSet<Guid> guids, IData data)
     {
-        await data.Resource.EnsureByGuids(guids);
-        var resources = data.Resource.List.Where(x => guids.Contains(x.Guid)).ToList();
+        await data.Resources.EnsureByGuids(guids);
+        var resources = data.Resources.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var resource in resources)
         {

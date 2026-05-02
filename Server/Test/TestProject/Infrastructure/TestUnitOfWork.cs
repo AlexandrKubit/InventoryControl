@@ -56,12 +56,12 @@ internal class TestUnitOfWork: IData
     }
 
     // Явная реализация интерфейса IData
-    public Client.IRepository Client => Get<TestClientRepository>();
-    public MeasureUnit.IRepository MeasureUnit { get; }
-    public Resource.IRepository Resource { get; }
-    public Balance.IRepository Balance => Get<TestBalanceRepository>();
-    public Domain.Entities.Warehouse.Receipt.Document.IRepository Receipt { get; }
-    public Domain.Entities.Warehouse.Receipt.Item.IRepository ReceiptItem => Get<TestReceiptItemRepository>();
-    public Domain.Entities.Warehouse.Shipment.Document.IRepository Shipment { get; }
-    public Domain.Entities.Warehouse.Shipment.Item.IRepository ShipmentItem { get; }
+    public Client.IRepository Clients => Get<TestClientRepository>();
+    public MeasureUnit.IRepository MeasureUnits { get; }
+    public Resource.IRepository Resources { get; }
+    public Balance.IRepository Balances => Get<TestBalanceRepository>();
+    public Domain.Entities.Warehouse.Receipt.Document.IRepository Receipts { get; }
+    public Domain.Entities.Warehouse.Receipt.Item.IRepository ReceiptItems => Get<TestReceiptItemRepository>();
+    public Domain.Entities.Warehouse.Shipment.Document.IRepository Shipments { get; }
+    public Domain.Entities.Warehouse.Shipment.Item.IRepository ShipmentItems { get; }
 }

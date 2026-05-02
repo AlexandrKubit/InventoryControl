@@ -25,8 +25,8 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
         {
             await Document.UpdateRange([new Document.UpdateArg(request.Guid, request.Number, request.Date)], data);
 
-            await data.ReceiptItem.EnsureByReceiptGuids([request.Guid]);
-            var items = data.ReceiptItem.List.Where(x => x.ReceiptGuid == request.Guid).ToList();
+            await data.ReceiptItems.EnsureByReceiptGuids([request.Guid]);
+            var items = data.ReceiptItems.List.Where(x => x.ReceiptGuid == request.Guid).ToList();
 
             // delete
             var deletedItemsGuids = items.Select(x => x.Guid).Except(request.Items.Select(x => x.Guid)).ToList();
