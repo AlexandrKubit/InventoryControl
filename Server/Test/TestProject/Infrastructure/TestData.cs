@@ -8,9 +8,9 @@ using TestProject.Infrastructure.Repositories;
 
 namespace Tests.Infrastructure;
 
-internal class TestUnitOfWork: IData
+internal class TestData: IData
 {
-    static TestUnitOfWork()
+    static TestData()
     {
         var type = typeof(Domain.Base.BaseEntity);
         var asm = Assembly.GetAssembly(type);
@@ -20,7 +20,7 @@ internal class TestUnitOfWork: IData
 
     private readonly Dictionary<Type, object> repositories = new Dictionary<Type, object>();
 
-    public TestUnitOfWork()
+    public TestData()
     {
         // Автоматически находим и создаем все тестовые репозитории через рефлексию
         var testRepositoryTypes = Assembly.GetExecutingAssembly()

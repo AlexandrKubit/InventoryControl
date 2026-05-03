@@ -9,21 +9,21 @@ namespace TestProject.Tests.Domain
         [Fact]
         public async Task DeleteReceiptItem_ShouldDecreaseBalance()
         {
-            var uow = new TestUnitOfWork();
+            var data = new TestData();
 
             var resourceGuid = Guid.CreateVersion7();
             var measureUnitGuid = Guid.CreateVersion7();
 
-            ((TestBalanceRepository)uow.Balances)
+            ((TestBalanceRepository)data.Balances)
                 .Add(Guid.CreateVersion7(), resourceGuid, measureUnitGuid, 100);
 
             var guid = Guid.CreateVersion7();
-            ((TestReceiptItemRepository)uow.ReceiptItems)
+            ((TestReceiptItemRepository)data.ReceiptItems)
                 .Add(guid, Guid.CreateVersion7(), resourceGuid, measureUnitGuid, 30);
 
-            await Item.DeleteRange([guid], uow);
+            await Item.DeleteRange([guid], data);
 
-            var updatedBalance = uow.Balances.List.First();
+            var updatedBalance = data.Balances.List.First();
             Assert.Equal(70, updatedBalance.Quantity);
         }
     }

@@ -5,12 +5,10 @@ namespace Tests.Infrastructure;
 
 internal class TestBalanceRepository : TestBaseRepository<Balance>, Balance.IRepository
 {
-    // по сути это для интеграциооных тестов
     public override void InitData()
     {
     }
 
-    // а это для юнит тестов
     public void Add(Guid guid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity) =>
         collection.Add(guid, Balance.IRepository.Restore(guid, resourceGuid, measureUnitGuid, quantity));
 

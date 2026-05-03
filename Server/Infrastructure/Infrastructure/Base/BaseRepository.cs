@@ -73,6 +73,7 @@ internal abstract class BaseRepository<TEntity>: BaseRepository where TEntity: B
 
     // кэш методов и аргументов репозиториев, которые уже вызывались 
     private readonly Dictionary<string, HashSet<object>> cache = new();
+
     protected async Task LoadWithCacheAsync<TArgs>(
         HashSet<TArgs> args,
         Func<HashSet<TArgs>, Task<Dictionary<Guid, TEntity>>> loadFunction,

@@ -4,12 +4,10 @@ namespace TestProject.Infrastructure.Repositories;
 
 internal class TestReceiptItemRepository : TestBaseRepository<Item>, Item.IRepository
 {
-    // по сути это для интеграциооных тестов
     public override void InitData()
     {
     }
 
-    // а это для юнит тестов
     public void Add(Guid guid, Guid receiptGuid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity) =>
         collection.Add(guid, Item.IRepository.Restore(guid, receiptGuid, resourceGuid, measureUnitGuid, quantity));
 

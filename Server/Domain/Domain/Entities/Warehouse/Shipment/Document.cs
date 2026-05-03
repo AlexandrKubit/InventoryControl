@@ -99,11 +99,10 @@ public sealed class Document : BaseEntity
             createItemArgs.AddRange(itemCreateArg);
         }
 
-        // Если Document.CreateRange нужны сами объекты Item
-        // (например, для дальнейшей логики)
+        // Если методу нужны сами объекты Item (например, для дальнейшей логики)
         var createdItems = await Item.CreateRange(createItemArgs, data);
 
-        return documents;
+        return documents;   
     }
 
     public record UpdateArg(Guid Guid, string Number, Guid ClientGuid, DateTime Date);

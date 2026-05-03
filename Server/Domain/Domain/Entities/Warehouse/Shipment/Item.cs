@@ -34,7 +34,7 @@ public sealed class Item : BaseEntity
     }
 
     public record CreateArg(Guid ShipmentGuid, Guid ResourceGuid, Guid MeasureUnitGuid, decimal Quantity);
-    public static async Task<HashSet<Item>> CreateRange(List<CreateArg> args, IData data)
+    public static async Task<List<Item>> CreateRange(List<CreateArg> args, IData data)
     {
         var shipmentGuids = args.Select(x => x.ShipmentGuid).ToHashSet();
         await data.Shipments.EnsureByGuids(shipmentGuids);
@@ -42,7 +42,7 @@ public sealed class Item : BaseEntity
         if (data.Shipments.List.Where(x => shipmentGuids.Contains(x.Guid)).Any(x => x.Condition == Document.Conditions.Signed))
             throw new DomainException("Невозможно добавить ресурс в подписанную отгрузку");
 
-        HashSet<Item> items = new HashSet<Item>();
+        List<Item> items = [];
 
         foreach (var arg in args)
         {
