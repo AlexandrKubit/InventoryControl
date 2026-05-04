@@ -2,8 +2,12 @@
 
 public interface IUnitOfWork
 {
-    public Task InitializeAsync();
+    public Task InitializeAsync(System.Data.IsolationLevel isolationLevel);
     public Task CommitAsync();
     public Task RollbackAsync();
-    public bool IsDeadlockException(Exception exception);
+    public bool IsTransientConcurrencyException(Exception exception);
+
+    // для получения эксклюзивной рекомендательной блокировки
+    // действует до конца текущей транзакции
+    public Task AcquireLock(Type entityType, string key);
 }

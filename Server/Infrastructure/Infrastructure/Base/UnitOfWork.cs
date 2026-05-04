@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System;
+using System.Security.Cryptography;
+using System.Text;
 
 /// <summary>
 /// Единица работы (Unit of Work) — главный координатор инфраструктуры.
@@ -54,7 +56,7 @@ public sealed class UnitOfWork : IData, IUnitOfWork
     /// Инициализация UoW: создание контекста EF, открытие соединения и начало транзакции.
     /// Вызывается один раз перед началом работы со сценарием.
     /// </summary>
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(System.Data.IsolationLevel isolationLevel)
     {
         var options = new DbContextOptionsBuilder<Context>()
             .UseNpgsql(connectionString)
@@ -62,7 +64,7 @@ public sealed class UnitOfWork : IData, IUnitOfWork
 
         Context = new Context(options);
         await Context.Database.OpenConnectionAsync();
-        transaction = await Context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+        transaction = await Context.Database.BeginTransactionAsync(isolationLevel);
         repositories = new();
     }
 
@@ -108,26 +110,46 @@ public sealed class UnitOfWork : IData, IUnitOfWork
     }
 
     /// <summary>
-    /// Проверка, является ли исключение deadlock'ом (код 40P01 для PostgreSQL).
+    /// Проверка, является ли исключение 
+    /// 40P01 (deadlock) или 40001 (serialization failure).
     /// Используется для реализации стратегий повторных попыток.
     /// </summary>
-    public bool IsDeadlockException(Exception exception)
+    public bool IsTransientConcurrencyException(Exception exception)
     {
         if (exception == null)
             return false;
 
-        if (exception is PostgresException postgresEx 
+        if (exception is PostgresException postgresEx
             && (postgresEx.SqlState == "40P01" || postgresEx.SqlState == "40001"))
             return true;
 
         if (exception is DbUpdateException dbUpdateEx)
-            return IsDeadlockException(dbUpdateEx.InnerException);
+            return IsTransientConcurrencyException(dbUpdateEx.InnerException);
 
         if (exception.InnerException != null)
-            return IsDeadlockException(exception.InnerException);
+            return IsTransientConcurrencyException(exception.InnerException);
 
         return false;
     }
+
+
+    public async Task AcquireLock(Type entityType, string key)
+    {
+        // Используем SHA256 для получения 64-битного хеша
+        // Вероятность коллизии 64-битного хеша на несколько порядков ниже, 
+        // чем у 32-битного, что делает этот метод достаточно надежным 
+        // для большинства бизнес-приложений
+        var fullKey = $"{entityType.FullName}:{key}";
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(fullKey));
+        var key1 = BitConverter.ToInt32(hashBytes, 0); // Биты 0-31
+        var key2 = BitConverter.ToInt32(hashBytes, 4); // Биты 32-63
+
+        await Context.Database.ExecuteSqlRawAsync(
+            "SELECT pg_advisory_xact_lock(@key1, @key2)",
+            new NpgsqlParameter("key1", key1),
+            new NpgsqlParameter("key2", key2));
+    }
+
 
     // Доступ к конкретным репозиториям через интерфейс IData.
     // Репозитории создаются лениво и кэшируются.

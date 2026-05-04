@@ -17,18 +17,18 @@ internal abstract class BaseRepository
 internal abstract class BaseRepository<TEntity>: BaseRepository where TEntity: BaseEntity
 {
     // основная коллеция сущностей выражена словарем для быстрого поиска по ключу
-    protected Dictionary<Guid, TEntity> collection = new();
+    protected Dictionary<Guid, TEntity> Collection = new();
 
     /// <summary>
     /// Коллекция сущностей TEntity: BaseEntity, доступны лишь те, которые не помечены как "удаленные"
     /// </summary>
-    public IEnumerable<TEntity> List => collection
+    public IEnumerable<TEntity> List => Collection
         .Select(x=> x.Value)
         .Where(x => x.ModificationType != BaseEntity.ModificationTypes.Removed);
 
-    // Намеренно создаем новый HashSet при обращении 
-    // чтобы EF Core мог эффективно превратить Contains в SQL‑оператор IN
-    protected HashSet<Guid> LoadedGuids => new(collection.Keys);
+    
+    // нужен чтобы EF Core мог эффективно превратить Contains в SQL‑оператор IN
+    protected HashSet<Guid> LoadedGuids = new();
 
 
     /// <summary>
@@ -39,7 +39,7 @@ internal abstract class BaseRepository<TEntity>: BaseRepository where TEntity: B
     public void Add(TEntity entity)
     {
         if (entity.ModificationType == BaseEntity.ModificationTypes.Created)
-            collection.Add(entity.Guid, entity);
+            Collection.Add(entity.Guid, entity);
     }
 
 
@@ -47,7 +47,10 @@ internal abstract class BaseRepository<TEntity>: BaseRepository where TEntity: B
     private void AddNewEntities(Dictionary<Guid, TEntity> entities)
     {
         foreach (var kvp in entities)
-            collection.TryAdd(kvp.Key, kvp.Value);
+        {
+            Collection.TryAdd(kvp.Key, kvp.Value);
+            LoadedGuids.Add(kvp.Key);
+        }
     }
 
     /// <summary>
@@ -58,7 +61,7 @@ internal abstract class BaseRepository<TEntity>: BaseRepository where TEntity: B
     /// </summary>
     public async Task EnsureByGuids(HashSet<Guid> guids)
     {
-        var missing = guids.Where(g => !collection.ContainsKey(g)).ToHashSet();
+        var missing = guids.Where(g => !Collection.ContainsKey(g)).ToHashSet();
         if (missing.Count == 0) 
             return;
 

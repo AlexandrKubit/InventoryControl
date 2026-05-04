@@ -44,7 +44,7 @@ internal class ShipmentRepository : BaseRepository<Document>, Document.IReposito
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Shipments,
-            entities: collection.Values,
+            entities: Collection.Values,
             createMapDelegate: entity => new Entities.Shipment
             {
                 Guid = entity.Guid,

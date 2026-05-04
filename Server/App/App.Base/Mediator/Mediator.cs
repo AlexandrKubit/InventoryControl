@@ -128,7 +128,8 @@ public static class Mediator
         {
             try
             {
-                await uow.InitializeAsync();
+                // передаем уровень изоляции транзакций
+                await uow.InitializeAsync(handler.IsolationLevel);
                 var result = await handler.BaseHandleAsync(request);
                 await uow.CommitAsync();
                 return result;
@@ -136,17 +137,13 @@ public static class Mediator
             catch (Exception ex)
             {
                 await uow.RollbackAsync();
-                if (uow.IsDeadlockException(ex))
-                {
+                if (uow.IsTransientConcurrencyException(ex))
                     await Task.Delay(retry * 1000);
-                }
                 else
-                {
                     throw; // Пробрасываем другие исключения.
-                }
             }
         }
-
+        
         throw new Exception("Достигнут лимит повторов транзакций.");
     }
 }

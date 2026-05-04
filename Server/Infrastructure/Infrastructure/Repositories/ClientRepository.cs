@@ -48,7 +48,7 @@ internal class ClientRepository : BaseRepository<Client>, Client.IRepository
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Clients,
-            entities: collection.Values,
+            entities: Collection.Values,
             createMapDelegate: entity => new Entities.Client
             {
                 Guid = entity.Guid,

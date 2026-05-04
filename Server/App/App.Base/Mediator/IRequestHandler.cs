@@ -3,6 +3,9 @@ using Exchange;
 
 public interface IBaseRequestHandler
 {
+    // по умолчанию используем Serializable
+    // для большинства сценариев в корпоративных системах он остаётся оптимальным
+    System.Data.IsolationLevel IsolationLevel => System.Data.IsolationLevel.Serializable;
     Task<object> BaseHandleAsync(IBaseRequest request);
 }
 

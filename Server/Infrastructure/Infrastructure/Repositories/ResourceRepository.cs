@@ -32,7 +32,7 @@ internal class ResourceRepository : BaseRepository<Resource>, Resource.IReposito
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Resources,
-            entities: collection.Values,
+            entities: Collection.Values,
             createMapDelegate: entity => new Entities.Resource
             {
                 Guid = entity.Guid,

@@ -59,7 +59,7 @@ internal class BalanceRepository : BaseRepository<Balance>, Balance.IRepository
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Balances,
-            entities: collection.Values,
+            entities: Collection.Values,
             createMapDelegate: entity => new Entities.Balance
             {
                 Guid = entity.Guid,

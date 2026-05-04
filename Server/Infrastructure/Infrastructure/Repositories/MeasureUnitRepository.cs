@@ -32,7 +32,7 @@ internal class MeasureUnitRepository : BaseRepository<MeasureUnit>, MeasureUnit.
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.MeasureUnits,
-            entities: collection.Values,
+            entities: Collection.Values,
             createMapDelegate: entity => new Entities.MeasureUnit
             {
                 Guid = entity.Guid,

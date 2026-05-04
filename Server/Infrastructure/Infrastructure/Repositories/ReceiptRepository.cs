@@ -33,7 +33,7 @@ internal class ReceiptRepository : BaseRepository<Document>, Document.IRepositor
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.Receipts,
-            entities: collection.Values,
+            entities: Collection.Values,
             createMapDelegate: entity => new Entities.Receipt
             {
                 Guid = entity.Guid,

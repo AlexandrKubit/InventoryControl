@@ -54,7 +54,7 @@ internal class ReceiptItemRepository : BaseRepository<Item>, Item.IRepository
     {
         EntityCommitHelper.CommitEntities(
             dbSet: context.ReceiptItems,
-            entities: collection.Values,
+            entities: Collection.Values,
             createMapDelegate: entity => new Entities.ReceiptItem
             {
                 Guid = entity.Guid,
