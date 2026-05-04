@@ -138,7 +138,7 @@ public static class Mediator
             {
                 await uow.RollbackAsync();
                 if (uow.IsTransientConcurrencyException(ex))
-                    await Task.Delay(retry * 1000);
+                    await Task.Delay(retry * 1000 + Random.Shared.Next(0, 500));
                 else
                     throw; // Пробрасываем другие исключения.
             }
