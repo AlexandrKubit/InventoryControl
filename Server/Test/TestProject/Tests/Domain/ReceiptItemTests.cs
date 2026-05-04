@@ -4,7 +4,7 @@ using Tests.Infrastructure;
 
 namespace TestProject.Tests.Domain
 {
-    public class ReciptItemTests
+    public class ReceiptItemTests
     {
         [Fact]
         public async Task DeleteReceiptItem_ShouldDecreaseBalance()
