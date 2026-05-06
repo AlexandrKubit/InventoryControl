@@ -29,6 +29,8 @@ public sealed class Balance : BaseEntity
 
         Shipment.Document.OnSignedRange(OnShipmentDocumentSignedRangeHandler);
         Shipment.Document.OnUnsignedRange(OnShipmentDocumentUnsignedRangeHandler);
+
+        Directories.MeasureUnit.OnDeletedRange(OnMeasureUnitDeletedRangeHandler);
     }
 
     public Guid ResourceGuid { get; }
@@ -61,8 +63,8 @@ public sealed class Balance : BaseEntity
             {
                 balance = new Balance(Guid.CreateVersion7(), arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
                 balance.Create();
-				data.Balances.Add(balance);
-			}
+                data.Balances.Add(balance);
+            }
         }
     }
 
@@ -183,5 +185,13 @@ public sealed class Balance : BaseEntity
             .ToList();
 
         await AddRangeToStock(addRangeToStockArgs, arg.Data);
+    }
+
+    private static async Task OnMeasureUnitDeletedRangeHandler(Directories.MeasureUnit.DeletedRangeArg arg)
+    {
+        await arg.Data.Balances.EnsureByMeasureUnitGuids(arg.Guids);
+
+        if (arg.Data.Balances.List.Any(x => arg.Guids.Contains(x.MeasureUnitGuid)))
+            throw new DomainException("Невозможно удалить единицу измерения т.к. она используется в складском остатке");
     }
 }

@@ -9,6 +9,11 @@ using System.Threading.Tasks;
 /// </summary>
 public sealed class Item : BaseEntity
 {
+    static Item()
+    {
+        Directories.MeasureUnit.OnDeletedRange(OnMeasureUnitDeletedRangeHandler);
+    }
+
     public interface IRepository : IBaseRepository<Item>
     {
         protected static Item Restore(Guid guid, Guid shipmentGuid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity)
@@ -112,5 +117,13 @@ public sealed class Item : BaseEntity
             if (!data.ShipmentItems.List.Any(x => x.ShipmentGuid == sg))
                 throw new DomainException("Невозможно удалить все ресурсы из отгрузки");
         }
+    }
+
+    private static async Task OnMeasureUnitDeletedRangeHandler(Directories.MeasureUnit.DeletedRangeArg arg)
+    {
+        await arg.Data.ShipmentItems.EnsureByMeasureUnitGuids(arg.Guids);
+
+        if (arg.Data.ShipmentItems.List.Any(x => arg.Guids.Contains(x.MeasureUnitGuid)))
+            throw new DomainException("Невозможно удалить единицу измерения т.к. она используется в отгрузке");
     }
 }

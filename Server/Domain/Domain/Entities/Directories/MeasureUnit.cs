@@ -10,6 +10,10 @@ using System.Threading.Tasks;
 /// </summary>
 public sealed class MeasureUnit : BaseEntity
 {
+    public record DeletedRangeArg(HashSet<Guid> Guids, IData Data);
+    public static Action<Func<DeletedRangeArg, Task>> OnDeletedRange => DeletedRange.Subscribe;
+    private static readonly DomainEvent<DeletedRangeArg> DeletedRange = new();
+
     public interface IRepository : IBaseRepository<MeasureUnit>
     {
         protected static MeasureUnit Restore(Guid id, string name, Conditions condition)
@@ -49,7 +53,7 @@ public sealed class MeasureUnit : BaseEntity
             var unit = new MeasureUnit(Guid.CreateVersion7(), name, Conditions.Work);
             unit.Create();
             data.MeasureUnits.Add(unit);
-			units.Add(unit);
+            units.Add(unit);
         }
 
         return units;
@@ -83,22 +87,24 @@ public sealed class MeasureUnit : BaseEntity
 
     public static async Task DeleteRange(HashSet<Guid> guids, IData data)
     {
-        await data.ReceiptItems.EnsureByMeasureUnitGuids(guids);
-        await data.Balances.EnsureByMeasureUnitGuids(guids);
-        await data.ShipmentItems.EnsureByMeasureUnitGuids(guids);
+        //await data.ReceiptItems.EnsureByMeasureUnitGuids(guids);
+        //await data.Balances.EnsureByMeasureUnitGuids(guids);
+        //await data.ShipmentItems.EnsureByMeasureUnitGuids(guids);
 
-        var receiptItems = data.ReceiptItems.List.Where(x => guids.Contains(x.MeasureUnitGuid));
-        var balances = data.Balances.List.Where(x => guids.Contains(x.MeasureUnitGuid));
-        var shipmentItems = data.ShipmentItems.List.Where(x => guids.Contains(x.MeasureUnitGuid));
+        //var receiptItems = data.ReceiptItems.List.Where(x => guids.Contains(x.MeasureUnitGuid));
+        //var balances = data.Balances.List.Where(x => guids.Contains(x.MeasureUnitGuid));
+        //var shipmentItems = data.ShipmentItems.List.Where(x => guids.Contains(x.MeasureUnitGuid));
 
-        if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
-            throw new DomainException("Невозможно удалить единицу измерения, так как она используется");
+        //if (receiptItems.Any() || balances.Any() || shipmentItems.Any())
+        //    throw new DomainException("Невозможно удалить единицу измерения, так как она используется");
 
         await data.MeasureUnits.EnsureByGuids(guids);
         var units = data.MeasureUnits.List.Where(x => guids.Contains(x.Guid)).ToList();
 
         foreach (var unit in units)
             unit.Remove();
+
+        await DeletedRange.Invoke(new DeletedRangeArg(guids, data));
     }
 
     public static async Task ToArchiveRange(HashSet<Guid> guids, IData data)

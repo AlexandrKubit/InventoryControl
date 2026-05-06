@@ -1,5 +1,6 @@
 ﻿namespace Domain.Entities.Warehouse.Receipt;
 
+using Common.Exceptions;
 using Domain.Base;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,11 @@ using System.Threading.Tasks;
 /// </summary>
 public sealed class Item : BaseEntity
 {
+    static Item()
+    {
+        Directories.MeasureUnit.OnDeletedRange(OnMeasureUnitDeletedRangeHandler);
+    }
+    
     public interface IRepository : IBaseRepository<Item>
     {
         protected static Item Restore(Guid guid, Guid receiptGuid, Guid resourceGuid, Guid measureUnitGuid, decimal quantity)
@@ -64,8 +70,22 @@ public sealed class Item : BaseEntity
     {
         List<Item> items = new List<Item>();
 
+        var resourceGuids = args.Select(x => x.ResourceGuid).ToHashSet();
+        var unitGuids = args.Select(x => x.MeasureUnitGuid).ToHashSet();
+
+        await data.Resources.EnsureByGuids(resourceGuids);
+        await data.MeasureUnits.EnsureByGuids(unitGuids);
+
         foreach (var arg in args)
         {
+            var resource = data.Resources.List.FirstOrDefault(x => x.Guid == arg.ResourceGuid);
+            if(resource == null || resource.Condition == Directories.Resource.Conditions.Archive)
+                throw new DomainException("Ресурс удален или переведен в архив");
+
+            var unit = data.MeasureUnits.List.FirstOrDefault(x => x.Guid == arg.MeasureUnitGuid);
+            if (unit == null || unit.Condition == Directories.MeasureUnit.Conditions.Archive)
+                throw new DomainException("Единица измерения удалена или переведена в архив");
+
             var item = new Item(Guid.CreateVersion7(), arg.ReceiptGuid, arg.ResourceGuid, arg.MeasureUnitGuid, arg.Quantity);
             item.Create();
 			data.ReceiptItems.Add(item);
@@ -112,5 +132,13 @@ public sealed class Item : BaseEntity
             item.Remove();
 
         await DeletedRange.Invoke(new DeletedRangeArg(items, data));
+    }
+
+    private static async Task OnMeasureUnitDeletedRangeHandler(Directories.MeasureUnit.DeletedRangeArg arg)
+    {
+        await arg.Data.ReceiptItems.EnsureByMeasureUnitGuids(arg.Guids);
+
+        if (arg.Data.ReceiptItems.List.Any(x => arg.Guids.Contains(x.MeasureUnitGuid)))
+            throw new DomainException("Невозможно удалить единицу измерения т.к. она используется в поступлениях");
     }
 }
