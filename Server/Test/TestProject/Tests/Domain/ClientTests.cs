@@ -14,7 +14,9 @@ namespace TestProject.Tests.Domain
             data.LoadData();
             var newClientArgs = new Client.CreateArg("Unique Name", "New Address");
 
-            var result = await Client.CreateRange(new List<Client.CreateArg> { newClientArgs }, data);
+            var result = await Client.CreateRange(
+                new List<Client.CreateArg> { newClientArgs }, data
+            );
 
             Assert.Single(result); // Проверяем, что создан один клиент
             Assert.Equal(3, data.Clients.List.Count()); // 2 предзаполненных + 1 новый
@@ -32,7 +34,9 @@ namespace TestProject.Tests.Domain
 
             var newClientArgs = new Client.CreateArg("Unique Name", "New Address");
 
-            var result = await Client.CreateRange(new List<Client.CreateArg> { newClientArgs }, data);
+            var result = await Client.CreateRange(
+                new List<Client.CreateArg> { newClientArgs }, data
+            );
 
             Assert.Single(result); // Проверяем, что создан один клиент
             Assert.Equal(3, data.Clients.List.Count()); // 2 предзаполненных + 1 новый

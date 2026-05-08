@@ -75,7 +75,8 @@ public class BaseEntity
     /// </summary>
     protected void Update()
     {
-        if (ModificationType == ModificationTypes.None || ModificationType == ModificationTypes.Updated)
+        if (ModificationType == ModificationTypes.None 
+            || ModificationType == ModificationTypes.Updated)
             ModificationType = ModificationTypes.Updated;
         else
             throw new Exception("Неправильное использование метода Update");

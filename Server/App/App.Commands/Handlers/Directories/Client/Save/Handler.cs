@@ -13,12 +13,20 @@ public class Handler(IData data) : IRequestHandler<Request, Guid>
     {
         if (request.Guid == Guid.Empty)
         {
-            var clients = await Client.CreateRange([new Client.CreateArg(request.Name, request.Address)], data);
+            // Создание нового клиента
+            var arg = new Client.CreateArg(request.Name, request.Address);
+            var clients = await Client.CreateRange([arg], data);
             return clients.First().Guid;
         }
         else
         {
-            await Client.UpdateRange([new Client.UpdateArg(request.Guid, request.Name, request.Address)], data);
+            // Обновление существующего клиента
+            var arg = new Client.UpdateArg(
+                request.Guid, 
+                request.Name, 
+                request.Address
+            );
+            await Client.UpdateRange([arg], data);
             return request.Guid;
         }
     }

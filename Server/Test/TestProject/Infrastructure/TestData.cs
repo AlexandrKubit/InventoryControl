@@ -14,7 +14,9 @@ internal class TestData: IData
     {
         var type = typeof(Domain.Base.BaseEntity);
         var asm = Assembly.GetAssembly(type);
-        var types = asm.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(type)).ToList();
+        var types = asm.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(type))
+            .ToList();
         types.ForEach(t => RuntimeHelpers.RunClassConstructor(t.TypeHandle));
     }
 

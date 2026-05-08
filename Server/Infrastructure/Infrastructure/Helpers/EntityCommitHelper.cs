@@ -1,6 +1,7 @@
 ﻿namespace Infrastructure.Helpers;
 
 using Domain.Base;
+using static Domain.Base.BaseEntity;
 using Infrastructure.Base;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,11 +20,14 @@ public static class EntityCommitHelper
         where TEntityMap : class, IGuidIdentity, new()
     {
         // 1. Добавление новых
-        var created = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Created);
+        var created = entities
+            .Where(x => x.ModificationType == ModificationTypes.Created);
         dbSet.AddRange(created.Select(createMapDelegate));
 
         // 2. Обновление существующих через Attach
-        var modified = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Updated);
+        var modified = entities
+            .Where(x => x.ModificationType == ModificationTypes.Updated);
+
         foreach (var entity in modified)
         {
             // такой подход позволяет использовать EF Core без change tracking
@@ -34,7 +38,9 @@ public static class EntityCommitHelper
         }
 
         // 3. Удаление существующих через Attach и Remove
-        var deleted = entities.Where(x => x.ModificationType == BaseEntity.ModificationTypes.Removed);
+        var deleted = entities
+            .Where(x => x.ModificationType == ModificationTypes.Removed);
+
         foreach (var entity in deleted)
         {
             // для удаления достаточно идентификатора
