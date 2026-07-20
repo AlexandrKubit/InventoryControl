@@ -21,7 +21,7 @@ using System.Text;
 /// </summary>
 public sealed class UnitOfWork : IData, IUnitOfWork
 {
-    internal Context Context { get; set; }
+    internal Context Context { get; private set; }
 
     private IServiceProvider provider;
     private IDbContextTransaction transaction;
