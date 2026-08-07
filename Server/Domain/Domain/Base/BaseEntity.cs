@@ -63,6 +63,9 @@ public class BaseEntity
     /// </summary>
     protected void Remove()
     {
+        if (ModificationType == ModificationTypes.Created)
+            throw new Exception("Неправильное использование метода Remove");
+
         ModificationType = ModificationTypes.Removed;
     }
 
