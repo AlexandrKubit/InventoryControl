@@ -12,13 +12,16 @@ public class Handler(IData data, IUnitOfWork uow) : IRequestHandler<Request, Gui
     // представим что редактирование поступления - это узкое место в нашей системе
     // множество пользователей одновременно редактируют поступлления
     System.Data.IsolationLevel IBaseRequestHandler.IsolationLevel 
-        => System.Data.IsolationLevel.RepeatableRead;
+        => System.Data.IsolationLevel.ReadCommitted;
 
+    // на самом деле указанных блокировок недостаточно, для гарантирования целостности
+    // нужно блокировать и ресурсы и единицы измерения и другие спорные ресурсы
+    // они показаны только для примера
     public async Task<Guid> HandleAsync(Request request)
     {
         if (request.Guid == Guid.Empty)
         {
-            // При RepeatableRead проверка уникальности номера не защищена
+            // При ReadCommitted проверка уникальности номера не защищена
             // Две параллельные транзакции могут одновременно не увидеть номер
             // и создать два документа с одинаковым номером, 
             // что нарушит бизнес-правило.
