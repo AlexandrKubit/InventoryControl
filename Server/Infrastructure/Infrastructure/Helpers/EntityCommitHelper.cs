@@ -35,6 +35,7 @@ public static class EntityCommitHelper
             var dbEntity = new TEntityMap { Guid = entity.Guid };
             dbSet.Attach(dbEntity);        // Прикрепляем к контексту как существующий
             updateMapDelegate(dbEntity, entity); // Применяем изменения из домена
+            dbSet.Update(dbEntity); // нужно для применения значений по умочанию
         }
 
         // 3. Удаление существующих через Attach и Remove
